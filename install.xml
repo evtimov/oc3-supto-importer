@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="utf-8"?>
+<modification>
+	<name>СУПТО Фактуриране ЕУ</name>
+	<code>suptofakturiraneeu</code>
+	<version>1.0.0</version>
+	<author>Лиценз ЕООД</author>
+	<link>https://fakturirane.eu/</link>
+
+	<file path="catalog/controller/checkout/confirm.php">
+		<operation>
+		<search><![CDATA[$this->session->data['order_id'] = $this->model_checkout_order->addOrder($order_data);]]></search>
+		<add position="after">
+		<![CDATA[
+			// FAKTURIRANE EU ++ >>
+			$this->load->amodel("extension/supto/fakturirane_eu");
+			$array = $this->model_extension_supto_fakturirane_eu->getSettings();
+
+			if(($array['api_user'] != '') and ($array['api_key'] != '')){
+				include(DIR_SYSTEM.'library/fakturirane/ClassFAPI.php');
+				try{
+					$FAPI = new FAPI($array['api_user'], $array['api_key']);
+					if($FAPI->login()){
+
+						if($order_data['customer_id'] == 0){
+							$eik = '000000000';
+						}else{
+							$r = $this->model_extension_supto_fakturirane_eu->getCustomerNumber($order_data['customer_id']);
+							if(isset($r) and isset($r['tax']) and ($r['tax'] != '')){
+								$eik = $r['tax'];
+							}else{
+								$eik = '000000000';
+							}
+						}
+
+						$sale = new StdClass();
+						$sale->order_id = $this->session->data['order_id'];
+
+						if($order_data['payment_code'] == ''){
+							$sale->payment_method_id = $array['payment_method_id'];
+						}else{
+							if (strpos($array['payments_cash'], $order_data['payment_code']) !== false) {
+								$sale->payment_method_id = 1; // В брой
+							}elseif (strpos($array['payments_bank'], $order_data['payment_code']) !== false) {
+								$sale->payment_method_id = 2; // Банка
+							}elseif (strpos($array['payments_card'], $order_data['payment_code']) !== false) {
+								$sale->payment_method_id = 3; // Карта
+							}elseif (strpos($array['payments_cod'], $order_data['payment_code']) !== false) {
+								$sale->payment_method_id = 7; // Н. платеж
+							}elseif (strpos($array['payments_mt'], $order_data['payment_code']) !== false) {
+								$sale->payment_method_id = 8; // ППП
+							}else{
+								$sale->payment_method_id = $array['payment_method_id'];
+							}
+						}
+						$sale->total = $order_data['total']; // общата сума на поръчката с ДДС
+
+						$sale->source_id = $array['source_id'];
+						$sale->object_id = $array['object_id'];
+						$sale->station_id = $array['station_id'];
+						$sale->add_to_catalog = $array['add_to_catalog']; 
+
+						$sale->autoload_measure = 1; 
+
+						$sale->rows = array();
+
+						$products = count($order_data['products']);
+						for($i = 0; $i < $products; $i++){
+							$row = new StdClass();
+							$row->name = $order_data['products'][$i]['name'];
+							$row->quantity = $order_data['products'][$i]['quantity'];
+							$row->measure_id = $array['measure_id']; // https://fakturirane.eu/help/api/misc-units-list.php
+							$row->discount_percent = 0;
+							$row->price = $order_data['products'][$i]['price'];
+
+							$row->code = '';
+							if($array['product_code_field'] == 0){
+								$row->code = 'S'.$sale->source_id.'-'.$order_data['products'][$i]['product_id']; 
+							}elseif($array['product_code_field'] == 1){
+								$row->code = 'S'.$sale->source_id.'-'.$order_data['products'][$i]['model'];
+							}else{
+								$l = $this->model_extension_supto_fakturirane_eu->getProductCodes($order_data['products'][$i]['product_id']);
+								if($array['product_code_field'] == 2){
+									$row->code = $l['sku'];
+								}elseif($array['product_code_field'] == 3){
+									$row->code = $l['upc'];
+								}elseif($array['product_code_field'] == 4){
+									$row->code = $l['ean'];
+								}elseif($array['product_code_field'] == 5){
+									$row->code = $l['jan'];
+								}elseif($array['product_code_field'] == 6){
+									$row->code = $l['isbn'];
+								}elseif($array['product_code_field'] == 7){
+									$row->code = $l['mpn'];
+								}
+							}
+							if($row->code == ''){
+								$row->code = 'S'.$sale->source_id.'-'.$order_data['products'][$i]['product_id'];
+							}
+
+							$sale->rows[] = $row;
+						}
+
+						$new_sale = $FAPI->sale_create($eik, $sale);
+						if(isset($new_sale)){
+							$this->model_extension_supto_fakturirane_eu->saveSUPTOSaleID($sale->order_id, $new_sale->id);
+							if($array['debug_mode'] == 1){
+								echo 'продажбата е регистрирана в СУПТО!';
+							}
+						}
+					}
+				}catch (Exception $ex) {
+					if($array['debug_mode'] == 1){
+						$this->display_warning($ex->getMessage());
+					}
+				}finally{
+					$FAPI->close_connection(); // Затваряне на връзката с FAPI
+				}
+			}
+			// FAKTURIRANE.EU ++ <<
+		]]>
+		</add>
+		</operation>
+	</file>
+
+	<file path="system/engine/loader.php">
+		<operation>
+		<search><![CDATA[public function view($route, $data = array()) {]]></search>
+		<add position="before">
+		<![CDATA[
+	public function amodel($model) {
+		$admin_dir = DIR_SYSTEM;
+		$admin_dir = str_replace('system/','admin/',$admin_dir);
+		$file = $admin_dir . 'model/' . $model . '.php';		
+		//$file  = DIR_APPLICATION . 'model/' . $model . '.php';
+		$class = 'Model' . preg_replace('/[^a-zA-Z0-9]/', '', $model);
+		
+		if (file_exists($file)) {
+			include_once($file);
+			
+			$this->registry->set('model_' . str_replace('/', '_', $model), new $class($this->registry));
+		} else {
+			trigger_error('Error: Could not load model ' . $model . '!');
+			exit();
+		}
+	}
+		]]>
+		</add>
+		</operation>
+	</file>
+</modification>

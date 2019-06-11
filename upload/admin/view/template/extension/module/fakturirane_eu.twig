@@ -1,0 +1,414 @@
+{{ header }}{{ column_left }}
+<div id="content">
+  <div class="page-header">
+    <div class="container-fluid">
+      <div class="pull-right">
+		<a class="btn btn-primary" href="{{op_url}}&op=1">{{ button_test_connection }}</a>
+        <button type="submit" form="form-module" data-toggle="tooltip" title="{{ button_save }}" class="btn btn-primary"><i class="fa fa-save"></i> {{button_save}}</button>
+        <a href="{{ cancel }}" data-toggle="tooltip" title="{{ button_cancel }}" class="btn btn-default"><i class="fa fa-reply"></i></a></div>
+      <h1>{{ invoicing_title }}</h1>
+      <ul class="breadcrumb">
+        {% for breadcrumb in breadcrumbs %}
+        <li><a href="{{ breadcrumb.href }}">{{ breadcrumb.text }}</a></li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+  <div class="container-fluid">
+
+	{% if result_text %}
+    <div class="alert alert-{{ result_class }} alert-dismissible"><i class="fa fa-exclamation-circle"></i> {{ result_text }}
+      <button type="button" class="close" data-dismiss="alert">&times;</button>
+    </div>
+    {% endif %}
+
+
+
+	<form action="{{ action }}" method="post" name="frmSettings" id="form-module" class="form-horizontal">
+
+          <ul class="nav nav-tabs">
+            <li class="active"><a href="#tab-general" data-toggle="tab">{{ text_settings_api }}</a></li>
+            <li><a href="#tab-payments" data-toggle="tab">{{ text_settings_payments }}</a></li>
+            <li><a href="#tab-catalog" data-toggle="tab">{{ text_settings_catalog }}</a></li>
+          </ul>
+          <div class="tab-content">
+            <div class="tab-pane active" id="tab-general">
+
+    <div class="panel panel-default">
+      <div class="panel-body">
+         <div class="form-group"><!--  required -->
+            <label class="col-sm-2 control-label" for="api_user"><span data-toggle="tooltip" data-html="true" data-trigger="hover" title="{{ help_code }}">{{ text_api_id }}</span></label>
+            <div class="col-sm-2">
+              <input name="api_user" type="text" id="api_user" class="form-control" value="{{ api_user }}">
+            </div>
+
+            <label class="col-sm-2 control-label" for="api_key">{{ text_api_key }}</label>
+            <div class="col-sm-4">
+              <input name="api_key" type="text" id="api_key" class="form-control" value="{{ api_key }}">
+            </div>
+   <div class="col-sm-2">
+			<input name="debug_mode" type="checkbox" id="debug_mode" value="1" {{ debug_mode }}>&nbsp;{{ text_debug_mode }}
+			</div>
+
+
+          </div>
+
+          <div class="form-group"><!--  required -->
+            <label class="col-sm-2 control-label" for="source_id"><span data-toggle="tooltip" data-html="true" data-trigger="hover" title="{{ help_source_id }}">{{ text_source_id }}</label>
+            <div class="col-sm-2">
+              <input name="source_id" type="text" id="source_id" class="form-control" value="{{ source_id }}">
+            </div>
+
+            <label class="col-sm-2 control-label" for="object_id"><span data-toggle="tooltip" data-html="true" data-trigger="hover" title="{{ help_object_id }}"> {{ text_object_id }}</label>
+            <div class="col-sm-2">
+              <input name="object_id" type="text" id="object_id" class="form-control" value="{{ object_id }}">
+            </div>
+
+            <label class="col-sm-2 control-label" for="station_id"><span data-toggle="tooltip" data-html="true" data-trigger="hover" title="{{ help_station_id }}"> {{ text_station_id }}</label>
+            <div class="col-sm-2">
+              <input name="station_id" type="text" id="station_id" class="form-control" value="{{ station_id }}">
+            </div>
+          </div>
+
+
+
+      </div>
+    </div>
+
+
+	</div>
+    <div class="tab-pane" id="tab-payments">
+
+    <div class="panel panel-default">
+      <div class="panel-body">
+
+          <div class="form-group"><!--  required -->
+            <label class="col-sm-3 control-label" for="payment_method_id">{{ text_payment_default }}</label>
+            <div class="col-sm-9">
+              <select name="payment_method_id" id="payment_method_id" class="form-control">
+				<option value="1">В брой</option>
+				<option value="2">По банков път</option>
+				<option value="3">POS/карта</option>
+				<option value="4">Чрез ePay.bg</option>
+				<option value="5">Частично в брой</option>
+				<option value="6">Насрещно прихващане</option>
+				<option value="7">Наложен платеж</option>
+				<option value="8">Пощенски паричен превод</option>
+			  </select>
+            </div>
+          </div>
+
+
+          <div class="form-group"><!--  required -->
+            <label class="col-sm-3 control-label" for="payments_cash"><span data-toggle="tooltip" data-html="true" data-trigger="hover" title="Въведете кодовете на плащанията, които ще се приравняват на плащания в брой. Изберете от инсталираните кодове, като използвате запетайка за разделител: {{ payments_codes }}"> {{ text_payments_cash }}</label>
+            <div class="col-sm-9">
+              <input name="payments_cash" type="text" id="payments_cash" class="form-control" value="{{ payments_cash }}">
+            </div>
+          </div>
+
+          <div class="form-group"><!--  required -->
+            <label class="col-sm-3 control-label" for="payments_bank"><span data-toggle="tooltip" data-html="true" data-trigger="hover" title="Въведете кодовете на плащанията, които ще се приравняват на плащания по банка. Изберете от инсталираните кодове, като използвате запетайка за разделител: {{ payments_codes }}"> {{ text_payments_bank }}</label>
+            <div class="col-sm-9">
+              <input name="payments_bank" type="text" id="payments_bank" class="form-control" value="{{ payments_bank }}">
+            </div>
+          </div>
+          <div class="form-group"><!--  required -->
+            <label class="col-sm-3 control-label" for="payments_card"><span data-toggle="tooltip" data-html="true" data-trigger="hover" title="Въведете кодовете на плащанията, които ще се приравняват на плащания с карта. Изберете от инсталираните кодове, като използвате запетайка за разделител: {{ payments_codes }}"> {{ text_payments_card }}</label>
+            <div class="col-sm-9">
+              <input name="payments_card" type="text" id="payments_card" class="form-control" value="{{ payments_card }}">
+            </div>
+          </div>
+          <div class="form-group"><!--  required -->
+            <label class="col-sm-3 control-label" for="payments_cod"><span data-toggle="tooltip" data-html="true" data-trigger="hover" title="Въведете кодовете на плащанията, които ще се приравняват на плащания с наложен платеж. Изберете от инсталираните кодове, като използвате запетайка за разделител: {{ payments_codes }}"> {{ text_payments_cod }}</label>
+            <div class="col-sm-9">
+              <input name="payments_cod" type="text" id="payments_cod" class="form-control" value="{{ payments_cod }}">
+            </div>
+          </div>
+          <div class="form-group"><!--  required -->
+            <label class="col-sm-3 control-label" for="payments_mt"><span data-toggle="tooltip" data-html="true" data-trigger="hover" title="Въведете кодовете на плащанията, които ще се приравняват на плащания с пощенски паричен превод. Изберете от инсталираните кодове, като използвате запетайка за разделител: {{ payments_codes }}"> {{ text_payments_mt }}</label>
+            <div class="col-sm-9">
+              <input name="payments_mt" type="text" id="payments_mt" class="form-control" value="{{ payments_mt }}">
+            </div>
+          </div>
+      </div>
+    </div>
+
+</div>
+
+    <div class="tab-pane" id="tab-catalog">
+
+    <div class="panel panel-default">
+      <div class="panel-body">
+
+          <div class="form-group"><!--  required -->
+            <label class="col-sm-3 control-label" for="product_code_field"><span data-toggle="tooltip" data-html="true" data-trigger="hover" title="Генерир се от S,  ID на източник от първия таб, тире и product_id на продукта. Например: S1-234"> {{ text_product_code_field }}</label>
+            <div class="col-sm-9">
+              <select name="product_code_field" id="product_code_field" class="form-control">
+				<option value="0">Автоматично генериране при експорт</option>
+				<option value="1">Взима се от Model</option>
+				<option value="2">Взима се от SKU</option>
+				<option value="3">Взима се от UPC</option>
+				<option value="4">Взима се от EAN</option>
+				<option value="5">Взима се от JAN</option>
+				<option value="6">Взима се от ISBN</option>
+				<option value="7">Взима се от MPN</option>
+			  </select>
+            </div>
+          </div>
+
+
+          <div class="form-group"><!--  required -->
+            <label class="col-sm-3 control-label" for="add_to_catalog">Автоматично добавяне <span data-toggle="tooltip" data-html="true" data-trigger="hover" title="Ако тази отметка е включена и стоката не съществува в номенклатурния списък тя може да бъде добавена автоматично в СУПТО при импортиране на поръчката"></span></label>
+            <div class="col-sm-9">
+				<br>
+   				<input name="add_to_catalog" type="checkbox" id="add_to_catalog" value="1" {{ add_to_catalog }}> {{ text_add_to_catalog }} 
+            </div>
+          </div>
+
+          <div class="form-group"><!--  required -->
+            <label class="col-sm-3 control-label" for="measure_id"><span data-toggle="tooltip" data-html="true" data-trigger="hover" title="Използва се само ако стоката не същестува в номенклатурния списък в СУПТО. Ако тя вече е налична в списъка в СУПТО, мерната единица се извлича автоматично."> {{ text_measure }}</label>
+            <div class="col-sm-9">
+              <select name="measure_id" id="measure_id" class="form-control">
+				<option value="70">Брой</option>
+				<option value="75">Връзка</option>
+				<option value="90">Година</option>
+				<option value="110">Грам</option>
+				<option value="130">Ден</option>
+				<option value="150">Декар</option>
+				<option value="220">Кашон</option>
+				<option value="250">Квадратен метър</option>
+				<option value="270">Киловатчас</option>
+				<option value="290">Килограм</option>
+				<option value="310">Километър</option>
+				<option value="313">Комплект</option>
+				<option value="315">Кутия</option>
+				<option value="320">Кубичен метър</option>
+				<option value="327">Линеен метър</option>
+				<option value="330">Литър</option>
+				<option value="331">Лева/мегаварчас</option>
+				<option value="332">Лева/мегаватчас</option>
+				<option value="336">Мегабайт</option>
+				<option value="337">Мегаварчас</option>
+				<option value="338">Мегаватчас</option>
+				<option value="340">Месец</option>
+				<option value="350">Метър</option>
+				<option value="430">Минута</option>
+				<option value="450">Милилитър</option>
+				<option value="470">Милиметър</option>
+				<option value="490">Милиграм</option>
+				<option value="498">Нощувка</option>
+				<option value="500">Пакет</option>
+				<option value="575">Страница</option>
+				<option value="590">Тон</option>
+				<option value="595">Торба</option>
+				<option value="690">Час</option>
+				<option value="700">Чифт</option>
+				<option value="705">Човеко часове</option>
+
+
+			  </select>
+            </div>
+          </div>
+
+        
+      </div>
+    </div>
+</div>
+
+
+</div>
+
+     </form>
+
+
+
+
+
+  <div class="row">
+    <div id="filter-order" class="col-md-3 col-md-push-9 col-sm-12 hidden-sm hidden-xs">
+		<form name="frmFilter">
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <h3 class="panel-title"><i class="fa fa-filter"></i> {{ text_filter_orders }}</h3>
+        </div>
+        <div class="panel-body">
+
+          <div class="form-group">
+            <label class="control-label" for="input-order-id">{{ entry_order_id }}</label>
+            <input type="text" name="filter_order_id" value="{{ filter_order_id }}" placeholder="{{ entry_order_id }}" id="input-order-id" class="form-control" />
+          </div>
+          <div class="form-group">
+            <label class="control-label" for="input-customer">{{ entry_customer }}</label>
+            <input type="text" name="filter_customer" value="{{ filter_customer }}" placeholder="{{ entry_customer }}" id="input-customer" class="form-control" />
+          </div>
+          <div class="form-group">
+            <label class="control-label" for="input-date-added">{{ entry_date_added }}</label>
+            <div class="input-group date">
+              <input type="text" name="filter_date_added" value="{{ filter_date_added }}" placeholder="{{ entry_date_added }}" data-date-format="YYYY-MM-DD" id="input-date-added" class="form-control" />
+              <span class="input-group-btn">
+              <button type="button" class="btn btn-default"><i class="fa fa-calendar"></i></button>
+              </span> </div>
+          </div>
+   
+		  <div class="form-group">
+            <label class="control-label" for="filter_supto_status">СУПТО статус</label>
+            <select  name="filter_supto_status" id="filter_supto_status" class="form-control">
+				<option value="0">Без значение</option>
+				<option value="1">Неимпортирани</option>
+				<option value="2">Приключени</option>
+				<option value="3">Анулирани</option>
+				<option value="4">Обработващи се</option>
+				<option value="5">Необработени</option>
+			</select>
+          </div>
+          <div class="form-group text-right">
+            <button type="button" id="button-filter" class="btn btn-default"><i class="fa fa-filter"></i> {{ button_supto_filter }}</button>
+          </div>
+
+        </div>
+      </div>
+		</form>
+
+    </div>
+    <div class="col-md-9 col-md-pull-3 col-sm-12">
+
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <h3 class="panel-title"><i class="fa fa-pencil"></i> {{ last_orders_title }}</h3>
+      </div>
+      <div class="panel-body">
+
+		  <table class="table table-bordered table-hover">
+			<thead>
+			  <tr>
+				<td class="text-right">{{ column_order_id }}</td>
+				<td class="text-left">{{ column_customer }}</td>
+				<td class="text-left">{{ column_status }}</td>
+				<td class="text-right">{{ column_total }}</td>
+				<td class="text-left">{{ column_date_added }}</td>
+				<td class="text-left">{{ column_supto_status }}</td>
+				<td class="text-left">{{ column_sale_id }}</td>
+				<td class="text-left">{{ column_unp }}</td>
+				<td class="text-right">{{ column_action }}</td>
+			  </tr>
+			</thead>
+			<tbody>
+			
+			{% if orders %}
+			{% for order in orders %}
+			<tr>
+			  <td class="text-right">{{ order.order_id }}</td>
+			  <td class="text-left">{{ order.customer }}</td>
+			  <td class="text-left">{{ order.order_status }}</td>
+			  <td class="text-right">{{ order.total }}</td>
+			  <td class="text-left">{{ order.date_added }}</td>
+			  <td class="text-left">{{ order.supto_status }}</td>
+			  <td class="text-left">{{ order.sale_id }}</td>
+			  <td class="text-left">{{ order.unp }}</td>
+			  <td class="text-right">
+				{{order.action_status}}
+				</td>
+			</tr>
+			{% endfor %}
+			{% else %}
+			<tr>
+			  <td class="text-center" colspan="8">{{ text_no_results }}</td>
+			</tr>
+			{% endif %}
+			  </tbody>
+			
+		  </table>
+
+</div>
+</div>
+
+
+</div>
+</div>
+
+
+<script type="text/javascript"><!--
+document.frmSettings.measure_id.value =  {{measure_id}};
+document.frmSettings.payment_method_id.value =  {{payment_method_id}};
+document.frmSettings.payment_method_id.value =  {{payment_method_id}};
+
+document.frmFilter.filter_supto_status.value = 3;
+
+$('#button-filter').on('click', function() {
+	url = '';
+
+	var filter_order_id = $('input[name=\'filter_order_id\']').val();
+
+	if (filter_order_id) {
+		url += '&filter_order_id=' + encodeURIComponent(filter_order_id);
+	}
+
+	var filter_customer = $('input[name=\'filter_customer\']').val();
+
+	if (filter_customer) {
+		url += '&filter_customer=' + encodeURIComponent(filter_customer);
+	}
+
+	var filter_order_status_id = $('select[name=\'filter_order_status_id\']').val();
+
+	if (filter_order_status_id !== '') {
+		url += '&filter_order_status_id=' + encodeURIComponent(filter_order_status_id);
+	}
+
+	var filter_supto_status = $('select[name=\'filter_supto_status\']').val();
+
+	if (filter_supto_status != 0) {
+		url += '&filter_supto_status=' + filter_supto_status;
+	}
+
+	var filter_total = $('input[name=\'filter_total\']').val();
+
+	if (filter_total) {
+		url += '&filter_total=' + encodeURIComponent(filter_total);
+	}
+
+	var filter_date_added = $('input[name=\'filter_date_added\']').val();
+
+	if (filter_date_added) {
+		url += '&filter_date_added=' + encodeURIComponent(filter_date_added);
+	}
+
+	location = 'index.php?route=extension/module/fakturirane_eu&user_token={{ user_token }}' + url;
+});
+//--></script> 
+
+ <script type="text/javascript"><!--
+$('input[name=\'filter_customer\']').autocomplete({
+	'source': function(request, response) {
+		$.ajax({
+			url: 'index.php?route=customer/customer/autocomplete&user_token={{ user_token }}&filter_name=' +  encodeURIComponent(request),
+			dataType: 'json',
+			success: function(json) {
+				response($.map(json, function(item) {
+					return {
+						label: item['name'],
+						value: item['customer_id']
+					}
+				}));
+			}
+		});
+	},
+	'select': function(item) {
+		$('input[name=\'filter_customer\']').val(item['label']);
+	}
+});
+//--></script> 
+
+
+  <script src="view/javascript/jquery/datetimepicker/bootstrap-datetimepicker.min.js" type="text/javascript"></script>
+  <link href="view/javascript/jquery/datetimepicker/bootstrap-datetimepicker.min.css" type="text/css" rel="stylesheet" media="screen" />
+  <script type="text/javascript"><!--
+$('.date').datetimepicker({
+	language: '{{ datepicker }}',
+	pickTime: false
+});
+//--></script>
+
+  </div>
+</div>
+{{ footer }}
