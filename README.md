@@ -10,7 +10,7 @@
 
 
 ### Инсталиране:  
-1) Изтеглете файла [fakturiraneeu.ocmod.zip](https://www.opencart.com/index.php?route=marketplace/extension/info&extension_id=37065);
+1) Изтеглете файла __fakturiraneeu.ocmod.zip__ от [GitHub](releases/download/1.0.0/fakturiraneeu.ocmod.zip) или официалния сайт на [OpenCart](https://www.opencart.com/index.php?route=marketplace/download&extension_id=37065);
 2) Влезте в административния панел на вашия онлайн магазин и изберете меню "Extensions" > "Installer";
 3) Натиснете бутона "Upload" и посочете zip файла.
 
