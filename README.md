@@ -1,7 +1,7 @@
 #  Импортер за СУПТО "Фактуриране ЕУ" за OpenCart 3.x
 Модулът предлага съвместимост на онлайн магазини базирани на платформата [OpenCart 3](https://www.opencart.com/) с [Наредба за изменение и допълнение на Наредба № Н-18](https://nap.bg/document?id=1265). Наредбата засяга тези онлайн магазини, които обработват плащания с наложен платеж  и кредитни карти в следствие на това, че според българското законодателство са задължени да издават фискален бон при обработка на онлайн поръчките. 
 
-[![СУПТО Импортер за OpenCart 3](/assets/preview.jpg)](https://www.opencart.com/index.php?route=marketplace/download&extension_id=37065)
+[![СУПТО Импортер за OpenCart 3](/upload/system/library/fakturirane/preview.jpg)](https://github.com/evtimov/oc3-supto-importer/releases/download/1.0.0/fakturiraneeu.ocmod.zip)
 
 ### Изисквания:
 - Онлайн магазин базиран на OpenCart версия 3.x;
