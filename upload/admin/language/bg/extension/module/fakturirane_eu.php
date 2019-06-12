@@ -1,5 +1,5 @@
-<?php
-$_['heading_title'] = 'A Fakturirane.EU API';
+﻿<?php
+$_['heading_title'] = 'Импортер за СУПТО Фактуриране ЕУ';
 $_['settings_title'] = 'API Настройки';
 $_['text_api_id'] = 'API номер';
 $_['text_api_key'] = 'API ключ';

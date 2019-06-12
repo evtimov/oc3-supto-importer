@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * Клас за връзка с СУПТО Импортер Фактуриране ЕУ чрез API от https://www.fakturirane.eu
  *
@@ -308,8 +308,10 @@ class ControllerExtensionModuleFakturiraneEu extends Controller {
 		if (isset($this->request->get['filter_supto_status'])) {
 			$filter_supto_status = $this->request->get['filter_supto_status'];
 		} else {
-			$filter_supto_status = '';
+			$filter_supto_status = 0;
 		}
+		$data['filter_supto_status'] = $filter_supto_status;
+
 
 		if (isset($this->request->get['filter_customer'])) {
 			$filter_customer = $this->request->get['filter_customer'];

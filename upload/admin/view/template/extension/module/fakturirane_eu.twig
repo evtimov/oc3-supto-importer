@@ -1,4 +1,4 @@
-{{ header }}{{ column_left }}
+﻿{{ header }}{{ column_left }}
 <div id="content">
   <div class="page-header">
     <div class="container-fluid">
@@ -330,9 +330,8 @@
 <script type="text/javascript"><!--
 document.frmSettings.measure_id.value =  {{measure_id}};
 document.frmSettings.payment_method_id.value =  {{payment_method_id}};
-document.frmSettings.payment_method_id.value =  {{payment_method_id}};
-
-document.frmFilter.filter_supto_status.value = 3;
+document.frmSettings.product_code_field.value =  {{product_code_field}};
+document.frmFilter.filter_supto_status.value =  {{filter_supto_status}};
 
 $('#button-filter').on('click', function() {
 	url = '';
