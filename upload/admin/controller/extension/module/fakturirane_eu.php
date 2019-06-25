@@ -1,11 +1,11 @@
-﻿<?php
+<?php
 /**
  * Клас за връзка с СУПТО Импортер Фактуриране ЕУ чрез API от https://www.fakturirane.eu
  *
  * Функции за автоматично прехвърляне на поръчки в СУПТО Фактуриране ЕУ.
  * Предлага се от фирма "Лиценз" ЕООД чрез уеб сайта на програма "Фактуране ЕУ" - https://fakturirane.eu/
  * @copyright  2019 Licenz Ltd.
- * @version    Release: 1.11
+ * @version    Release: 1.12
  * @link       https://fakturirane.eu/help/api/
 **/
 
@@ -19,6 +19,7 @@ class ControllerExtensionModuleFakturiraneEu extends Controller {
 	private $SOURCE_ID = 1;
 	private $PAYMENT_METHOD_ID = 1;
 	private $PAYMENT_CODES = array();
+	private $VAT_PERCENT = 0;
 
 	private function check_api(){
 		$array = $this->model_extension_supto_fakturirane_eu->getSettings();
@@ -38,6 +39,7 @@ class ControllerExtensionModuleFakturiraneEu extends Controller {
 		$this->PAYMENTS_CARD = $array['payments_card'];
 		$this->PAYMENTS_COD = $array['payments_cod']; // cash on delivery
 		$this->PAYMENTS_MT = $array['payments_mt']; // money transfer
+		$this->VAT_PERCENT = $array['vat_percent'];
 
 		$this->PAYMENT_CODES = $this->model_extension_supto_fakturirane_eu->getPaymentCodes();
 
@@ -76,6 +78,10 @@ class ControllerExtensionModuleFakturiraneEu extends Controller {
 
 		$data['op_url'] = $this->url->link('extension/module/fakturirane_eu', 'user_token=' . $this->session->data['user_token'], true);
 
+		//$data['button_export'] = $this->language->get('button_export');
+		$data['export_url'] = $this->url->link('extension/module/fakturirane_eu/export', 'user_token=' . $this->session->data['user_token'], true);
+
+
 		if ($this->request->server['REQUEST_METHOD'] == 'POST')  {
 			$this->model_extension_supto_fakturirane_eu->editSetting($this->request->post);
 
@@ -97,6 +103,7 @@ class ControllerExtensionModuleFakturiraneEu extends Controller {
 			$data['payments_card'] = $this->request->post['payments_card'];
 			$data['payments_cod'] = $this->request->post['payments_cod'];
 			$data['payments_mt'] = $this->request->post['payments_mt'];
+			$data['vat_percent'] = $this->request->post['vat_percent'];
 
 			$data['payments_codes'] = isset($this->session->data['ss_payments_codes'])?$this->session->data['ss_payments_codes']:'';
 
@@ -123,6 +130,8 @@ class ControllerExtensionModuleFakturiraneEu extends Controller {
 			$data['payments_card'] = $this->PAYMENTS_CARD;
 			$data['payments_cod'] = $this->PAYMENTS_COD;
 			$data['payments_mt'] = $this->PAYMENTS_MT;
+
+			$data['vat_percent'] = $this->VAT_PERCENT;
 
 			$pcount = count($this->PAYMENT_CODES);
 			if($pcount > 0){
@@ -157,14 +166,10 @@ class ControllerExtensionModuleFakturiraneEu extends Controller {
 					try{
 						include(DIR_SYSTEM.'library/fakturirane/ClassFAPI.php');
 						$FAPI = new FAPI($this->API_USER, $this->API_KEY);
-						if($FAPI->login()){
-							$date = $FAPI->license_expire();
-							$this->display_info($this->language->get('text_license_valid_to').$this->format_date($date).' г.');
-						}
+						$date = $FAPI->license_expire();
+						$this->display_info($this->language->get('text_license_valid_to').$this->format_date($date).' г.');
 					}catch (Exception $ex) {
 						$this->display_warning($ex->getMessage());
-					}finally{
-						$FAPI->close_connection();
 					}
 				}
 			}elseif($op == 2){
@@ -174,103 +179,101 @@ class ControllerExtensionModuleFakturiraneEu extends Controller {
 					if($order_id > 0){
 						try{
 							$FAPI = new FAPI($this->API_USER, $this->API_KEY);
-							if($FAPI->login()){
-								$order_data = $this->model_extension_supto_fakturirane_eu->getOrder($order_id);
-								if($order_data['customer_id'] == 0){
+
+							$order_data = $this->model_extension_supto_fakturirane_eu->getOrder($order_id);
+							if($order_data['customer_id'] == 0){
+								$eik = '000000000';
+							}else{
+								$r = $this->model_extension_supto_fakturirane_eu->getCustomerNumber($order_data['customer_id']);
+								if(isset($r) and isset($r['tax']) and ($r['tax'] != '')){
+									$eik = $r['tax'];
+								}else{
 									$eik = '000000000';
-								}else{
-									$r = $this->model_extension_supto_fakturirane_eu->getCustomerNumber($order_data['customer_id']);
-									if(isset($r) and isset($r['tax']) and ($r['tax'] != '')){
-										$eik = $r['tax'];
-									}else{
-										$eik = '000000000';
-									}
 								}
+							}
 
-								$sale = new StdClass();
-								$sale->order_id = $order_id;
+							$sale = new StdClass();
+							$sale->order_id = $order_id;
 
-								if($order_data['payment_code'] == ''){
+							if($order_data['payment_code'] == ''){
+								$sale->payment_method_id = $this->PAYMENT_METHOD_ID;
+							}else{
+								if (strpos($this->PAYMENTS_CASH, $order_data['payment_code']) !== false) {
+									$sale->payment_method_id = 1;
+								}elseif (strpos($this->PAYMENTS_BANK, $order_data['payment_code']) !== false) {
+									$sale->payment_method_id = 2;
+								}elseif (strpos($this->PAYMENTS_CARD, $order_data['payment_code']) !== false) {
+									$sale->payment_method_id = 3;
+								}elseif (strpos($this->PAYMENTS_COD, $order_data['payment_code']) !== false) {
+									$sale->payment_method_id = 7;
+								}elseif (strpos($this->PAYMENTS_MT, $order_data['payment_code']) !== false) {
+									$sale->payment_method_id = 8;
+								}else{
 									$sale->payment_method_id = $this->PAYMENT_METHOD_ID;
+								}
+							}
+							$sale->total = $order_data['total'];
+
+							$sale->source_id = $this->SOURCE_ID;
+							$sale->object_id = $this->OBJECT_ID;
+							$sale->station_id = $this->STATION_ID;
+							$sale->add_to_catalog = $this->ADD_TO_CATALOG;
+							$sale->vat_percent = $this->VAT_PERCENT;
+
+							$sale->autoload_measure = 1; 
+
+							$sale->rows = array();
+
+							$products = $this->model_extension_supto_fakturirane_eu->getOrderProducts($order_id);
+		
+							$products_c = count($products);
+							for($i = 0; $i < $products_c; $i++){
+								$row = new StdClass();
+								$row->name = $products[$i]['name'];
+								$row->quantity = $products[$i]['quantity'];
+								$row->measure_id = $this->MEASURE_ID; // https://fakturirane.eu/help/api/misc-units-list.php
+								$row->discount_percent = 0;
+								$row->price = $products[$i]['price'];
+
+								$row->code = '';
+								if($this->PRODUCT_CODE_FIELD == 0){
+									$row->code = 'S'.$sale->source_id.'-'.$products[$i]['product_id']; 
+								}elseif($this->PRODUCT_CODE_FIELD == 1){
+									$row->code = 'S'.$sale->source_id.'-'.$products[$i]['model'];
 								}else{
-									if (strpos($this->PAYMENTS_CASH, $order_data['payment_code']) !== false) {
-										$sale->payment_method_id = 1;
-									}elseif (strpos($this->PAYMENTS_BANK, $order_data['payment_code']) !== false) {
-										$sale->payment_method_id = 2;
-									}elseif (strpos($this->PAYMENTS_CARD, $order_data['payment_code']) !== false) {
-										$sale->payment_method_id = 3;
-									}elseif (strpos($this->PAYMENTS_COD, $order_data['payment_code']) !== false) {
-										$sale->payment_method_id = 7;
-									}elseif (strpos($this->PAYMENTS_MT, $order_data['payment_code']) !== false) {
-										$sale->payment_method_id = 8;
-									}else{
-										$sale->payment_method_id = $this->PAYMENT_METHOD_ID;
+									$l = $this->model_extension_supto_fakturirane_eu->getProductCodes($products[$i]['product_id']);
+									if($this->PRODUCT_CODE_FIELD == 2){
+										$row->code = $l['sku'];
+									}elseif($this->PRODUCT_CODE_FIELD == 3){
+										$row->code = $l['upc'];
+									}elseif($this->PRODUCT_CODE_FIELD == 4){
+										$row->code = $l['ean'];
+									}elseif($this->PRODUCT_CODE_FIELD == 5){
+										$row->code = $l['jan'];
+									}elseif($this->PRODUCT_CODE_FIELD == 6){
+										$row->code = $l['isbn'];
+									}elseif($this->PRODUCT_CODE_FIELD == 7){
+										$row->code = $l['mpn'];
 									}
 								}
-								$sale->total = $order_data['total'];
-
-								$sale->source_id = $this->SOURCE_ID;
-								$sale->object_id = $this->OBJECT_ID;
-								$sale->station_id = $this->STATION_ID;
-								$sale->add_to_catalog = $this->ADD_TO_CATALOG;
-
-								$sale->autoload_measure = 1; 
-
-								$sale->rows = array();
-
-								$products = $this->model_extension_supto_fakturirane_eu->getOrderProducts($order_id);
-			
-								$products_c = count($products);
-								for($i = 0; $i < $products_c; $i++){
-									$row = new StdClass();
-									$row->name = $products[$i]['name'];
-									$row->quantity = $products[$i]['quantity'];
-									$row->measure_id = $this->MEASURE_ID; // https://fakturirane.eu/help/api/misc-units-list.php
-									$row->discount_percent = 0;
-									$row->price = $products[$i]['price'];
-
-									$row->code = '';
-									if($this->PRODUCT_CODE_FIELD == 0){
-										$row->code = 'S'.$sale->source_id.'-'.$products[$i]['product_id']; 
-									}elseif($this->PRODUCT_CODE_FIELD == 1){
-										$row->code = 'S'.$sale->source_id.'-'.$products[$i]['model'];
-									}else{
-										$l = $this->model_extension_supto_fakturirane_eu->getProductCodes($products[$i]['product_id']);
-										if($this->PRODUCT_CODE_FIELD == 2){
-											$row->code = $l['sku'];
-										}elseif($this->PRODUCT_CODE_FIELD == 3){
-											$row->code = $l['upc'];
-										}elseif($this->PRODUCT_CODE_FIELD == 4){
-											$row->code = $l['ean'];
-										}elseif($this->PRODUCT_CODE_FIELD == 5){
-											$row->code = $l['jan'];
-										}elseif($this->PRODUCT_CODE_FIELD == 6){
-											$row->code = $l['isbn'];
-										}elseif($this->PRODUCT_CODE_FIELD == 7){
-											$row->code = $l['mpn'];
-										}
-									}
-									if($row->code == ''){
-										$row->code = 'S'.$sale->source_id.'-'.$products[$i]['product_id'];
-									}
-
-									$sale->rows[] = $row;
+								if($row->code == ''){
+									$row->code = 'S'.$sale->source_id.'-'.$products[$i]['product_id'];
 								}
 
-								$new_sale = $FAPI->sale_create($eik, $sale);
-								if(isset($new_sale)){
-									$this->model_extension_supto_fakturirane_eu->saveSUPTOSaleID($sale->order_id, $new_sale->id);
-									if($this->DEBUG_MODE == 1){
-										$this->display_info($this->language->get('text_sale_registered'));
-									}
+								$sale->rows[] = $row;
+							}
+
+							$new_sale = $FAPI->sale_create($eik, $sale);
+							if(isset($new_sale)){
+								$this->model_extension_supto_fakturirane_eu->saveSUPTOSaleID($sale->order_id, $new_sale->id);
+								if($this->DEBUG_MODE == 1){
+									$this->display_info($this->language->get('text_sale_registered'));
 								}
 							}
 						}catch (Exception $ex) {
 							if($this->DEBUG_MODE == 1){
 								$this->display_warning($ex->getMessage());
 							}
-						}finally{
-							$FAPI->close_connection();
 						}
 					}
 				}
@@ -281,18 +284,14 @@ class ControllerExtensionModuleFakturiraneEu extends Controller {
 						try{
 							include(DIR_SYSTEM.'library/fakturirane/ClassFAPI.php');
 							$FAPI = new FAPI($this->API_USER, $this->API_KEY);
-							if($FAPI->login()){
-								$status = $FAPI->sale_get_status($sale_id);
-								if(isset($status)){
-									$this->model_extension_supto_fakturirane_eu->save_sale_status($sale_id, $status->number, $status->anul, $status->completed);
-								}else{
-									$this->display_info($this->language->get('text_sale_not_completed_message'));
-								}
+							$status = $FAPI->sale_get_status($sale_id);
+							if(isset($status)){
+								$this->model_extension_supto_fakturirane_eu->save_sale_status($sale_id, $status->number, $status->anul, $status->completed);
+							}else{
+								$this->display_info($this->language->get('text_sale_not_completed_message'));
 							}
 						}catch (Exception $ex) {
 							$this->display_warning($ex->getMessage());
-						}finally{
-							$FAPI->close_connection();
 						}
 					}
 				}
@@ -311,7 +310,6 @@ class ControllerExtensionModuleFakturiraneEu extends Controller {
 			$filter_supto_status = 0;
 		}
 		$data['filter_supto_status'] = $filter_supto_status;
-
 
 		if (isset($this->request->get['filter_customer'])) {
 			$filter_customer = $this->request->get['filter_customer'];
@@ -426,6 +424,204 @@ class ControllerExtensionModuleFakturiraneEu extends Controller {
 
 		$this->response->setOutput($this->load->view('extension/module/fakturirane_eu', $data));
 	
+	}
+
+
+	public function export() {
+		
+		$this->load->model('catalog/product');
+		$returns= array();
+
+		$data = array();
+
+		$results = $this->model_catalog_product->getProducts($data);
+
+		foreach ($results as $result) {
+
+			$special = false;
+
+			$product_specials = $this->model_catalog_product->getProductSpecials($result['product_id']);
+
+			
+			foreach ($product_specials  as $product_special) {
+				if (($product_special['date_start'] == '0000-00-00' || $product_special['date_start'] < date('Y-m-d')) && ($product_special['date_end'] == '0000-00-00' || $product_special['date_end'] > date('Y-m-d'))) {
+					$result['price'] = $product_special['price'];
+					break;
+				}
+			}
+
+			$this->load->model("extension/supto/fakturirane_eu");
+			$array = $this->model_extension_supto_fakturirane_eu->getSettings();
+			$product_code_field = $array['product_code_field'];
+			$default_measure_id = $array['measure_id'];
+			$source_id = $array['source_id'];
+
+			if($result['manufacturer_id'] > 0){
+				$manufacturer = $this->model_extension_supto_fakturirane_eu->getOrderManufacturer($result['manufacturer_id']);
+			}else{
+				$manufacturer = '';
+			}
+
+			$product_code = '';
+			if($product_code_field == 0){
+				$product_code = 'S'.$this->SOURCE_ID.'-'.$result['product_id']; 
+			}elseif($product_code_field == 1){
+				$product_code = 'S'.$source_id.'-'.$result['model'];
+			}else{
+				$l = $this->model_extension_supto_fakturirane_eu->getProductCodes($result['product_id']);
+				if($product_code_field == 2){
+					$product_code = $l['sku'];
+				}elseif($product_code_field == 3){
+					$product_code = $l['upc'];
+				}elseif($product_code_field == 4){
+					$product_code = $l['ean'];
+				}elseif($product_code_field == 5){
+					$product_code = $l['jan'];
+				}elseif($product_code_field == 6){
+					$product_code = $l['isbn'];
+				}elseif($product_code_field == 7){
+					$product_code = $l['mpn'];
+				}
+			}
+
+		//	$product_code = $this->PRODUCT_CODE_FIELD;
+
+			$products[] = array(
+				'product_id' => $product_code,
+				'name' => html_entity_decode($result['name']),
+				'price' => $result['price'],
+				'price_base' => '0',
+				'quantity' => $result['quantity'],
+				'measure_id'=> 'бр.',
+				'supplier' => $manufacturer,
+				'group' => '',
+				'notes' => ''
+			);
+		
+			$options = $this->model_catalog_product->getProductOptions($result['product_id']);
+			$new_options = array();
+			if(isset($options)){
+				for($i = 0; $i < count($options); $i++){
+					if(($options[$i]['type'] == 'select') or ($options[$i]['type'] == 'checkbox') or ($options[$i]['type'] == 'radio')){
+						$new_options[] = $options[$i];
+					}
+				}
+			}
+			$count = count($new_options);
+			if($count == 1){
+				$values = $new_options[0]['product_option_value'];
+				for($i = 0; $i < count($values); $i++){
+					$option = $this->model_catalog_product->getProductOptionValue($result['product_id'], $values[$i]['product_option_value_id']);
+					$option_name = $option['name'];
+					$products[] = array(
+						'product_id' => $product_code.'-'.$values[$i]['option_value_id'],
+						'name' => html_entity_decode($result['name']).' ('.$option_name.')',
+						'price' => $result['price'] + $values[$i]['price'],
+						'price_base' => '0',
+						'quantity' => $values[$i]['quantity'],
+						'measure_id'=> 'бр.',
+						'supplier' => $manufacturer,
+						'group' => '',
+						'notes' => ''
+					);
+				}
+			}elseif($count == 2){
+				$values1 = $new_options[0]['product_option_value'];
+				$values2 = $new_options[1]['product_option_value'];
+
+				for($i = 0; $i < count($values1); $i++){
+					$option1 = $this->model_catalog_product->getProductOptionValue($result['product_id'], $values1[$i]['product_option_value_id']);
+					$option_name1 = $option1['name'];
+
+					for($j = 0; $j < count($values2); $j++){
+						$option2 = $this->model_catalog_product->getProductOptionValue($result['product_id'], $values2[$j]['product_option_value_id']);
+						$option_name2 = $option2['name'];
+						$products[] = array(
+							'product_id' => $product_code.'-'.$values1[$i]['option_value_id'].'-'.$values2[$j]['option_value_id'],
+							'name' => html_entity_decode($result['name']).' ('.$option_name1.', '.$option_name2.')',
+							'price' => $result['price'] + $values1[$i]['price'] + $values2[$j]['price'],
+							'price_base' => '0',
+							'quantity' => '-',
+							'measure_id'=> 'бр.',
+							'supplier' => $manufacturer,
+							'group' => '',
+							'notes' => ''
+						);
+					}
+
+				}
+
+			}elseif($count == 3){
+				$values1 = $new_options[0]['product_option_value'];
+				$values2 = $new_options[1]['product_option_value'];
+				$values3 = $new_options[2]['product_option_value'];
+
+				for($i = 0; $i < count($values1); $i++){
+					$option1 = $this->model_catalog_product->getProductOptionValue($result['product_id'], $values1[$i]['product_option_value_id']);
+					$option_name1 = $option1['name'];
+
+					for($j = 0; $j < count($values2); $j++){
+						$option2 = $this->model_catalog_product->getProductOptionValue($result['product_id'], $values2[$j]['product_option_value_id']);
+						$option_name2 = $option2['name'];
+
+						for($k = 0; $k < count($values3); $k++){
+							$option3 = $this->model_catalog_product->getProductOptionValue($result['product_id'], $values3[$k]['product_option_value_id']);
+							$option_name3 = $option3['name'];
+							$products[] = array(
+								'product_id' => $product_code.'-'.$values1[$i]['option_value_id'].'-'.$values2[$j]['option_value_id'].'-'.$values3[$k]['option_value_id'],
+								'name' => html_entity_decode($result['name']).' ('.$option_name1.', '.$option_name2.', '.$option_name3.')',
+								'price' => $result['price'] + $values1[$i]['price'] + $values2[$j]['price'] + $values3[$k]['price'],
+								'price_base' => '0',
+								'quantity' => '-',
+								'measure_id'=> 'бр.',
+								'supplier' => $manufacturer,
+								'group' => '',
+								'notes' => ''
+							);
+						}
+
+
+					}
+
+				}
+
+			}
+
+				//SELECT option_id FROM oc_product_option WHERE  product_id = $product_id ORDER BY option_id
+				//SELECT option_value_id, quantity, price FROM oc_product_option_value WHERE (product_option_id = $o_id) AND (product_id = $p_id)
+
+
+		}
+
+		$products_data = array(array('Арт. номер', 'Наименование', 'Ед. цена без ДДС', 'Дост. цена без ДДС', 'Количество', 'Мярка', 'Доставчик', 'Група', 'Бележки'));
+
+		foreach($products as $products_row){
+			$products_data[]= $products_row;
+		}
+
+		require_once(DIR_SYSTEM . 'library/fakturirane/PHPExcel.php');
+		$filename='product_list_'.date('Y-m-d _ H:i:s');
+		$filename = preg_replace('/[^aA-zZ0-9\_\-]/', '', $filename);
+		// Create new PHPExcel object
+
+		$objPHPExcel = new PHPExcel();
+
+		$objPHPExcel->getActiveSheet()->fromArray($products_data, null, 'A1');
+		// Set active sheet index to the first sheet, so Excel opens this as the first sheet
+		$objPHPExcel->setActiveSheetIndex(0);
+
+		// Save Excel 95 file
+
+		$callStartTime = microtime(true);
+		$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel5');
+		
+		//Setting the header type
+		header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+		header("Content-Disposition: attachment; filename=\"" . $filename . ".xls\"");
+		
+		header('Cache-Control: max-age=0');
+
+		$objWriter->save('php://output');
 	}
 
 	public function install() {

@@ -5,33 +5,37 @@
  * Функции за работа с информация до базите данни на лицензите от тип "Облачна база дани",
  * предлагани от фирма "Лиценз" ЕООД чрез уеб сайта на програма "Фактуране EU" - https://fakturirane.eu/
  * @copyright  2019 Licenz Ltd.
- * @version    Release: 3.17
+ * @version    Release: 3.18
  * @link       https://fakturirane.eu/help/api/
 **/
 
 class FAPI {
 	protected $eik;
 	protected $key;
-	protected $ch;
-	protected $session;
 
-	const API_VERSION = 3.17;
-	const API_URL = 'https://fakturirane.eu/api/fakapi.php';
+	const API_VERSION = 3.18;
+	const API_URL = 'https://fakturirane.eu/api/';
 
 	public function __construct ($eik, $key){
 		$this->eik = $eik;
 		$this->key = $key;
-
-		$this->ch = curl_init();
-		curl_setopt($this->ch, CURLOPT_URL, self::API_URL);
-		curl_setopt($this->ch, CURLOPT_RETURNTRANSFER, 1);
-		curl_setopt($this->ch, CURLOPT_POST, 1);
 	}
 
-	private function send_data($data){
-		$data['session'] = $this->session;
-		curl_setopt($this->ch, CURLOPT_POSTFIELDS, $data);
-		$result = curl_exec($this->ch);
+	private function send_data($command, $data = null){
+		$ch = curl_init();
+		try{
+			curl_setopt($ch, CURLOPT_URL, self::API_URL.$command);
+			curl_setopt($ch, CURLOPT_HTTPHEADER, array('Authorization: Basic '. base64_encode($this->eik.':'.$this->key)));
+			curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+			curl_setopt($ch, CURLOPT_POST, 1);
+			curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
+			$result = curl_exec($ch);
+		}catch (Exception $ex) {
+			echo 'Грешка: '.$ex->getMessage();
+		}finally{
+			curl_close($ch);
+		}
+
 		$result = json_decode($result);
 		if($result->error == 0){ 
 			return $result;
@@ -39,22 +43,6 @@ class FAPI {
 			$this->display_error($result->error, $data['function']);
 			return null;
 		}
-	}
-
-	public function login(){
-		$result = $this->send_data(array('function' => 'login', 'eik' => $this->eik, 'key' => $this->key, 'host'=>$_SERVER['HTTP_HOST'], 'user_agent'=>$_SERVER['HTTP_USER_AGENT'], 'ip'=>$_SERVER['REMOTE_ADDR'], 'api_version'=>self::API_VERSION));
-		if(isset($result)){
-			$this->session = $result->session;
-			return true;
-		}else{
-			$this->session = null;
-			return false;
-		}
-	}
-
-	public function logout(){
-		$this->send_data(array('function' => 'logout'));
-		$this->session = null;
 	}
 
 	public function welcome($return = false){
@@ -138,7 +126,8 @@ class FAPI {
 
 			case 1001: $result .= 'Не е открита профилна таблица в базата с данни.'; break;
 
-			case 2001: $result .= 'Не е изпратен номер на продажба.'; break; // TODO - НОВО - да се опише!
+			case 2001: $result .= 'Не е изпратен номер на поръчка/продажба.'; break;
+			case 2002: $result .= 'Не е открита продажба с това ID в СУПТО.'; break;
 
 			default:
 				$result .= 'Грешка ('.$error.')!';
@@ -147,15 +136,10 @@ class FAPI {
 		throw new Exception($result);
 	}
 
-	public function close_connection(){
-		curl_close($this->ch);
-	}
-
 	// API PUBLIC FUNCTIONS
 
-
-	public function license_expire(){
-		$result = $this->send_data(array('function' => 'license_expire'));
+	public function license_status(){
+		$result = $this->send_data('license_status');
 		if(isset($result)){
 			return $result->license_expire;
 		}else{
@@ -165,7 +149,7 @@ class FAPI {
 
 	// PROFILE  >>>
 	public function profile_retrieve(){
-		$result = $this->send_data(array('function' => 'profile_retrieve'));
+		$result = $this->send_data('profile_retrieve');
 		if(isset($result)){
 			return $result->profile;
 		}else{
@@ -174,8 +158,8 @@ class FAPI {
 	}
 
 	public function profile_update($profile){
-		$data = array('function'=>'profile_update', 'profile'=>json_encode($profile));
-		$result = $this->send_data($data);
+		$data = array('profile'=>json_encode($profile));
+		$result = $this->send_data('profile_update', $data);
 		if(isset($result)){
 			return $result->id;
 		}else{
@@ -186,7 +170,7 @@ class FAPI {
 
 	// CLIENTS  >>>
 	public function client_create($client){
-		$result = $this->send_data(array('function' => 'client_create', 'client'=>json_encode($client)));
+		$result = $this->send_data('client_create', array('client'=>json_encode($client)));
 		if(isset($result)){
 			return $result->client_id;
 		}else{
@@ -195,7 +179,7 @@ class FAPI {
 	}
 
 	public function client_list(){
-		$result = $this->send_data(array('function' => 'client_list'));
+		$result = $this->send_data('client_list');
 		if(isset($result)){
 			return $result->clients;
 		}else{
@@ -204,7 +188,7 @@ class FAPI {
 	}
 
 	public function client_retrieve($id, $type = 1){
-		$result = $this->send_data(array('function' => 'client_retrieve', 'id'=>$id, 'type'=>$type));
+		$result = $this->send_data('client_retrieve', array('id'=>$id, 'type'=>$type));
 		if(isset($result)){
 			return $result->client;
 		}else{
@@ -213,8 +197,8 @@ class FAPI {
 	}
 
 	public function client_update($id, $client, $type = 1){
-		$data = array('function'=>'client_update', 'id'=>$id, 'type'=>$type, 'client'=>json_encode($client));
-		$result = $this->send_data($data);
+		$data = array('id'=>$id, 'type'=>$type, 'client'=>json_encode($client));
+		$result = $this->send_data('client_update', $data);
 		if(isset($result)){
 			return $result->id;
 		}else{
@@ -223,12 +207,12 @@ class FAPI {
 	}
 
 	public function client_delete($id, $type = 1){
-		$data = array('function'=>'client_delete', 'id'=>$id, 'type'=>$type);
-		return $this->send_data($data);
+		$data = array('id'=>$id, 'type'=>$type);
+		return $this->send_data('client_delete', $data);
 	}
 
 	public function client_search($search){
-		$result = $this->send_data(array('function' => 'client_search', 'search'=>$search));
+		$result = $this->send_data('client_search', array('search'=>$search));
 		if(isset($result)){
 			return $result->clients;
 		}else{
@@ -239,7 +223,7 @@ class FAPI {
 
 	// ITEMS >>>
 	public function item_create($item){
-		$result = $this->send_data(array('function' => 'item_create', 'item'=>json_encode($item)));
+		$result = $this->send_data('item_create', array('item'=>json_encode($item)));
 		if(isset($result)){
 			return $result->item_id;
 		}else{
@@ -248,7 +232,7 @@ class FAPI {
 	}
 
 	public function item_retrieve($id, $type = 1){
-		$result = $this->send_data(array('function' => 'item_retrieve', 'id'=>$id, 'type'=>$type));
+		$result = $this->send_data('item_retrieve', array('id'=>$id, 'type'=>$type));
 		if(isset($result)){
 			return $result->item;
 		}else{
@@ -257,8 +241,8 @@ class FAPI {
 	}
 
 	public function item_update($id, $item, $type = 1){
-		$data = array('function'=>'item_update', 'id'=>$id, 'type'=>$type, 'item'=>json_encode($item));
-		$result = $this->send_data($data);
+		$data = array('id'=>$id, 'type'=>$type, 'item'=>json_encode($item));
+		$result = $this->send_data('item_update', $data);
 		if(isset($result)){
 			return $result->id;
 		}else{
@@ -267,12 +251,12 @@ class FAPI {
 	}
 
 	public function item_delete($id, $type = 1){
-		$data = array('function'=>'item_delete', 'id'=>$id, 'type'=>$type);
-		return $this->send_data($data);
+		$data = array('id'=>$id, 'type'=>$type);
+		return $this->send_data('item_delete', $data);
 	}
 
 	public function item_search($search){
-		$result = $this->send_data(array('function' => 'item_search', 'search'=>$search));
+		$result = $this->send_data('item_search', array('search'=>$search));
 		if(isset($result)){
 			return $result->items;
 		}else{
@@ -283,8 +267,8 @@ class FAPI {
 
 	// DOCUMENTS >>>
 	public function document_create($eik, $type, $document){
-		$data = array('function'=>'document_create', 'type'=>$type, 'eik'=>$eik, 'document'=>json_encode($document));
-		$result = $this->send_data($data);
+		$data = array('type'=>$type, 'eik'=>$eik, 'document'=>json_encode($document));
+		$result = $this->send_data('document_create', $data);
 		if(isset($result)){
 			return $result->document;
 		}else{
@@ -293,8 +277,8 @@ class FAPI {
 	}
 
 	public function document_retrieve($type, $id){
-		$data = array('function'=>'document_retrieve', 'type'=>$type, 'id'=>$id);
-		$result = $this->send_data($data);
+		$data = array('type'=>$type, 'id'=>$id);
+		$result = $this->send_data('document_retrieve', $data);
 		if(isset($result)){
 			return $result->document;
 		}else{
@@ -303,8 +287,8 @@ class FAPI {
 	}
 
 	public function document_list($type = 1, $eik = '', $limit = 5){
-		$data = array('function'=>'document_list', 'type'=>$type, 'eik'=>$eik, 'limit'=>$limit);
-		$result = $this->send_data($data);
+		$data = array('type'=>$type, 'eik'=>$eik, 'limit'=>$limit);
+		$result = $this->send_data('document_list', $data);
 		if(isset($result)){
 			if(isset($result->documents)){
 				return $result->documents;
@@ -317,8 +301,8 @@ class FAPI {
 	}
 
 	public function document_search($type = 1, $search = '', $search_type = 0){
-		$data = array('function'=>'document_search', 'type'=>$type, 'search_type'=>$search_type, 'search'=>$search);
-		$result = $this->send_data($data);
+		$data = array('type'=>$type, 'search_type'=>$search_type, 'search'=>$search);
+		$result = $this->send_data('document_search', $data);
 		if(isset($result)){
 			if(isset($result->documents)){
 				return $result->documents;
@@ -331,8 +315,8 @@ class FAPI {
 	}
 
 	public function document_update($type, $id, $document){
-		$data = array('function'=>'document_update', 'id'=>$id, 'type'=>$type, 'document'=>json_encode($document));
-		$result = $this->send_data($data);
+		$data = array('id'=>$id, 'type'=>$type, 'document'=>json_encode($document));
+		$result = $this->send_data('document_update', $data);
 		if(isset($result)){
 			return $result->document;
 		}else{
@@ -341,8 +325,8 @@ class FAPI {
 	}
 
 	public function document_delete($type, $id, $numbers_id = 0){
-		$data = array('function'=>'document_delete', 'type'=>$type, 'id'=>$id, 'numbers_id' => $numbers_id);
-		$result = $this->send_data($data);
+		$data = array('type'=>$type, 'id'=>$id, 'numbers_id' => $numbers_id);
+		$result = $this->send_data('document_delete', $data);
 		if(isset($result)){
 			return $result->id;
 		}else{
@@ -351,8 +335,8 @@ class FAPI {
 	}
 
 	public function document_clone($type, $id){
-		$data = array('function'=>'document_clone', 'type'=>$type, 'id'=>$id);
-		$result = $this->send_data($data);
+		$data = array('type'=>$type, 'id'=>$id);
+		$result = $this->send_data('document_clone', $data);
 		if(isset($result)){
 			return $result->document;
 		}else{
@@ -361,8 +345,8 @@ class FAPI {
 	}
 
 	public function document_print_pdf($type, $id, $copy = 0, $language = 0){
-		$data = array('function'=>'document_print_pdf', 'type'=>$type, 'id'=>$id, 'copy'=>$copy, 'language'=>$language);
-		$result = $this->send_data($data);
+		$data = array('type'=>$type, 'id'=>$id, 'copy'=>$copy, 'language'=>$language);
+		$result = $this->send_data('document_print_pdf', $data);
 		if(isset($result)){
 			return urldecode($result->document);
 		}else{
@@ -371,8 +355,8 @@ class FAPI {
 	}
 
 	public function document_send($type, $id, $copy = 0, $language = 0, $email = '', $settings){
-		$data = array('function'=>'document_send', 'type'=>$type, 'id'=>$id, 'copy'=>$copy, 'language'=>$language, 'email' => $email, 'settings'=>json_encode($settings));
-		$result = $this->send_data($data);
+		$data = array('type'=>$type, 'id'=>$id, 'copy'=>$copy, 'language'=>$language, 'email' => $email, 'settings'=>json_encode($settings));
+		$result = $this->send_data('document_send', $data);
 		if(isset($result)){
 			return $result->error;
 		}else{
@@ -381,8 +365,8 @@ class FAPI {
 	}
 
 	public function document_create_and_send($eik, $type, $document, $copy = 0, $language = 0, $email = '', $settings){
-		$data = array('function'=>'document_create_and_send', 'type'=>$type, 'eik'=>$eik, 'document'=>json_encode($document), 'copy'=>$copy, 'language'=>$language, 'email' => $email, 'settings'=>json_encode($settings));
-		$result = $this->send_data($data);
+		$data = array('type'=>$type, 'eik'=>$eik, 'document'=>json_encode($document), 'copy'=>$copy, 'language'=>$language, 'email' => $email, 'settings'=>json_encode($settings));
+		$result = $this->send_data('document_create_and_send', $data);
 		if(isset($result)){
 			return $result->document;
 		}else{
@@ -391,7 +375,7 @@ class FAPI {
 	}
 
 	public function document_statistics($type = 1, $year = 0, $payment_method = 0){
-		$result = $this->send_data(array('function' => 'document_statistics', 'type'=>$type, 'year'=>$year, 'payment_method'=>$payment_method));
+		$result = $this->send_data('document_statistics', array('type'=>$type, 'year'=>$year, 'payment_method'=>$payment_method));
 		if(isset($result)){
 			return $result->count;
 		}else{
@@ -401,9 +385,9 @@ class FAPI {
 	// DOCUMENTS <<<
 
 	// SALES  >>>
-	public function sale_create($eik, $sale){
-		$data = array('function'=>'sale_create', 'eik'=>$eik, 'sale'=>json_encode($sale));
-		$result = $this->send_data($data);
+	public function sale_create($sale){
+		$data = array('sale'=>json_encode($sale));
+		$result = $this->send_data('sale_create', $data);
 		if(isset($result)){
 			return $result->sale;
 		}else{
@@ -412,10 +396,10 @@ class FAPI {
 	}
 
 	public function sale_get_status($sale_id){
-		$data = array('function'=>'sale_get_status', 'sale_id'=>$sale_id);
-		$result = $this->send_data($data);
+		$data = array('sale_id'=>$sale_id);
+		$result = $this->send_data('sale_get_status', $data);
 		if(isset($result)){
-			return $result->status;
+			return $result->sale;
 		}else{
 			return null;
 		}
@@ -425,8 +409,8 @@ class FAPI {
 
 	// WAREHOUSE >>>
 	public function warehouse_item_quantity($code, $quantity){
-		$data = array('function'=>'warehouse_item_quantity', 'code'=>$code, 'quantity'=> json_encode($quantity));
-		$result = $this->send_data($data);
+		$data = array('code'=>$code, 'quantity'=> json_encode($quantity));
+		$result = $this->send_data('warehouse_item_quantity', $data);
 		if(isset($result)){
 			return $result->count;
 		}else{
@@ -435,8 +419,8 @@ class FAPI {
 	}
 
 	public function warehouse_item_status($code){
-		$data = array('function'=>'warehouse_item_status', 'code'=>$code);
-		$result = $this->send_data($data);
+		$data = array('code'=>$code);
+		$result = $this->send_data('warehouse_item_status', $data);
 		if(isset($result)){
 			return $result->count;
 		}else{

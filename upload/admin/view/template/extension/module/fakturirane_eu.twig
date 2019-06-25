@@ -1,9 +1,8 @@
-﻿{{ header }}{{ column_left }}
+{{ header }}{{ column_left }}
 <div id="content">
   <div class="page-header">
     <div class="container-fluid">
       <div class="pull-right">
-		<a class="btn btn-primary" href="{{op_url}}&op=1">{{ button_test_connection }}</a>
         <button type="submit" form="form-module" data-toggle="tooltip" title="{{ button_save }}" class="btn btn-primary"><i class="fa fa-save"></i> {{button_save}}</button>
         <a href="{{ cancel }}" data-toggle="tooltip" title="{{ button_cancel }}" class="btn btn-default"><i class="fa fa-reply"></i></a></div>
       <h1>{{ invoicing_title }}</h1>
@@ -16,18 +15,12 @@
   </div>
   <div class="container-fluid">
 
-	{% if result_text %}
-    <div class="alert alert-{{ result_class }} alert-dismissible"><i class="fa fa-exclamation-circle"></i> {{ result_text }}
-      <button type="button" class="close" data-dismiss="alert">&times;</button>
-    </div>
-    {% endif %}
-
-
 
 	<form action="{{ action }}" method="post" name="frmSettings" id="form-module" class="form-horizontal">
 
           <ul class="nav nav-tabs">
             <li class="active"><a href="#tab-general" data-toggle="tab">{{ text_settings_api }}</a></li>
+            <li><a href="#tab-supto" data-toggle="tab">{{ text_settings_supto }}</a></li>
             <li><a href="#tab-payments" data-toggle="tab">{{ text_settings_payments }}</a></li>
             <li><a href="#tab-catalog" data-toggle="tab">{{ text_settings_catalog }}</a></li>
           </ul>
@@ -36,40 +29,30 @@
 
     <div class="panel panel-default">
       <div class="panel-body">
+
          <div class="form-group"><!--  required -->
-            <label class="col-sm-2 control-label" for="api_user"><span data-toggle="tooltip" data-html="true" data-trigger="hover" title="{{ help_code }}">{{ text_api_id }}</span></label>
-            <div class="col-sm-2">
+            <label class="col-sm-3  control-label" for="api_user"><span data-toggle="tooltip" data-html="true" data-trigger="hover" title="{{ help_code }}">{{ text_api_id }}</span></label>
+            <div class="col-sm-9">
               <input name="api_user" type="text" id="api_user" class="form-control" value="{{ api_user }}">
             </div>
-
-            <label class="col-sm-2 control-label" for="api_key">{{ text_api_key }}</label>
-            <div class="col-sm-4">
+		</div>
+		 <div class="form-group"><!--  required -->
+            <label class="col-sm-3 control-label" for="api_key">{{ text_api_key }}</label>
+            <div class="col-sm-9">
               <input name="api_key" type="text" id="api_key" class="form-control" value="{{ api_key }}">
             </div>
-   <div class="col-sm-2">
-			<input name="debug_mode" type="checkbox" id="debug_mode" value="1" {{ debug_mode }}>&nbsp;{{ text_debug_mode }}
+		</div>
+		 <div class="form-group"><!--  required -->
+			 <label class="col-sm-3 control-label">
+				<input name="debug_mode" type="checkbox" id="debug_mode" value="1" {{ debug_mode }}>&nbsp;{{ text_debug_mode }}
+			</label>
+
+			 <div class="col-sm-9">
+				<a class="btn btn-primary" href="{{op_url}}&op=1">{{ button_test_connection }}</a>
 			</div>
-
+	
 
           </div>
-
-          <div class="form-group"><!--  required -->
-            <label class="col-sm-2 control-label" for="source_id"><span data-toggle="tooltip" data-html="true" data-trigger="hover" title="{{ help_source_id }}">{{ text_source_id }}</label>
-            <div class="col-sm-2">
-              <input name="source_id" type="text" id="source_id" class="form-control" value="{{ source_id }}">
-            </div>
-
-            <label class="col-sm-2 control-label" for="object_id"><span data-toggle="tooltip" data-html="true" data-trigger="hover" title="{{ help_object_id }}"> {{ text_object_id }}</label>
-            <div class="col-sm-2">
-              <input name="object_id" type="text" id="object_id" class="form-control" value="{{ object_id }}">
-            </div>
-
-            <label class="col-sm-2 control-label" for="station_id"><span data-toggle="tooltip" data-html="true" data-trigger="hover" title="{{ help_station_id }}"> {{ text_station_id }}</label>
-            <div class="col-sm-2">
-              <input name="station_id" type="text" id="station_id" class="form-control" value="{{ station_id }}">
-            </div>
-          </div>
-
 
 
       </div>
@@ -77,6 +60,40 @@
 
 
 	</div>
+
+
+    <div class="tab-pane" id="tab-supto">
+
+    <div class="panel panel-default">
+      <div class="panel-body">
+
+          <div class="form-group"><!--  required -->
+            <label class="col-sm-3 control-label" for="source_id"><span data-toggle="tooltip" data-html="true" data-trigger="hover" title="{{ help_source_id }}">{{ text_source_id }}</label>
+            <div class="col-sm-9">
+              <input name="source_id" type="text" id="source_id" class="form-control" value="{{ source_id }}">
+            </div>
+			</div>
+			<div class="form-group"><!--  required -->
+            <label class="col-sm-3 control-label" for="object_id"><span data-toggle="tooltip" data-html="true" data-trigger="hover" title="{{ help_object_id }}"> {{ text_object_id }}</label>
+            <div class="col-sm-9">
+              <input name="object_id" type="text" id="object_id" class="form-control" value="{{ object_id }}">
+            </div>
+			</div>
+			<div class="form-group"><!--  required -->
+            <label class="col-sm-3 control-label" for="station_id"><span data-toggle="tooltip" data-html="true" data-trigger="hover" title="{{ help_station_id }}"> {{ text_station_id }}</label>
+            <div class="col-sm-9">
+              <input name="station_id" type="text" id="station_id" class="form-control" value="{{ station_id }}">
+            </div>
+          </div>
+
+
+      </div>
+    </div>
+
+</div>
+
+
+
     <div class="tab-pane" id="tab-payments">
 
     <div class="panel panel-default">
@@ -140,6 +157,21 @@
     <div class="panel panel-default">
       <div class="panel-body">
 
+
+      <div class="form-group"><!--  required -->
+            <label class="col-sm-3 control-label" for="vat_percent"><span data-toggle="tooltip" data-html="true" data-trigger="hover" title="Посочете дали е включено ДДС в цените на продуктите"> {{ text_vat_percent }}</label>
+            <div class="col-sm-9">
+              <select name="vat_percent" id="vat_percent" class="form-control">
+				<option value="0">В цените няма ДДС (Фирмата не е регистрирана по ЗДДС)</option>
+				<option value="9">Цените са с включен 9% ДДС</option>
+				<option value="20">Цените са с включен 20% ДДС</option>
+
+
+			  </select>
+            </div>
+          </div>
+
+
           <div class="form-group"><!--  required -->
             <label class="col-sm-3 control-label" for="product_code_field"><span data-toggle="tooltip" data-html="true" data-trigger="hover" title="Генерир се от S,  ID на източник от първия таб, тире и product_id на продукта. Например: S1-234"> {{ text_product_code_field }}</label>
             <div class="col-sm-9">
@@ -155,7 +187,6 @@
 			  </select>
             </div>
           </div>
-
 
           <div class="form-group"><!--  required -->
             <label class="col-sm-3 control-label" for="add_to_catalog">Автоматично добавяне <span data-toggle="tooltip" data-html="true" data-trigger="hover" title="Ако тази отметка е включена и стоката не съществува в номенклатурния списък тя може да бъде добавена автоматично в СУПТО при импортиране на поръчката"></span></label>
@@ -204,11 +235,15 @@
 				<option value="690">Час</option>
 				<option value="700">Чифт</option>
 				<option value="705">Човеко часове</option>
-
-
 			  </select>
             </div>
           </div>
+          <div class="form-group"><!--  required -->
+            <label class="col-sm-3 control-label"></label>
+            <div class="col-sm-9">
+		  		<a class="btn btn-primary" href="{{export_url}}">{{ text_export_xls }}</a>
+			</div>
+		</div>
 
         
       </div>
@@ -221,6 +256,11 @@
      </form>
 
 
+	{% if result_text %}
+    <div class="alert alert-{{ result_class }} alert-dismissible"><i class="fa fa-exclamation-circle"></i> {{ result_text }}
+      <button type="button" class="close" data-dismiss="alert">&times;</button>
+    </div>
+    {% endif %}
 
 
 
@@ -328,6 +368,7 @@
 
 
 <script type="text/javascript"><!--
+document.frmSettings.vat_percent.value =  {{vat_percent}};
 document.frmSettings.measure_id.value =  {{measure_id}};
 document.frmSettings.payment_method_id.value =  {{payment_method_id}};
 document.frmSettings.product_code_field.value =  {{product_code_field}};

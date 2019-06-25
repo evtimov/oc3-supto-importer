@@ -1,11 +1,11 @@
 <?php
 class ModelExtensionSuptoFakturiraneEu extends Model {
 	public function getSettings() {
-		$query = $this->db->query("SELECT api_user, api_key, object_id, station_id, debug_mode, add_to_catalog, product_code_field, measure_id, source_id, payment_method_id, payments_cash, payments_bank, payments_card, payments_cod, payments_mt FROM `" . DB_PREFIX . "fakturirane_eu` LIMIT 1");
+		$query = $this->db->query("SELECT api_user, api_key, object_id, station_id, debug_mode, add_to_catalog, product_code_field, measure_id, source_id, payment_method_id, payments_cash, payments_bank, payments_card, payments_cod, payments_mt, vat_percent FROM `" . DB_PREFIX . "fakturirane_eu` LIMIT 1");
 		if ($query->row) {
 			return $query->row; // json_decode(, true);
 		}else{
-			return array('api_user'=>'', 'api_key'=>'', 'object_id'=>0, 'station_id'=>0, 'debug_mode'=>0, 'add_to_catalog'=>1, 'product_code_field'=>0, 'source_id'=>1, 'payment_method_id'=>1, 'payments_cash'=>'', 'payments_bank'=>'', 'payments_card'=>'', 'payments_cod'=>'', 'payments_mt'=>'', 'measure_id'=>70);
+			return array('api_user'=>'', 'api_key'=>'', 'object_id'=>0, 'station_id'=>0, 'debug_mode'=>0, 'add_to_catalog'=>1, 'product_code_field'=>0, 'source_id'=>1, 'payment_method_id'=>1, 'payments_cash'=>'', 'payments_bank'=>'', 'payments_card'=>'', 'payments_cod'=>'', 'payments_mt'=>'', 'measure_id'=>70, 'vat_percent'=>0);
 		}
 	}
 
@@ -44,6 +44,7 @@ class ModelExtensionSuptoFakturiraneEu extends Model {
 		$payments_card = isset($post['payments_card'])?$post['payments_card']:'';
 		$payments_cod = isset($post['payments_cod'])?$post['payments_cod']:'';
 		$payments_mt = isset($post['payments_mt'])?$post['payments_mt']:'';
+		$vat_percent = isset($post['vat_percent'])?$post['vat_percent']:0;
 
 		$payments_cash = str_replace(' ', '', $payments_cash);
 		$payments_bank = str_replace(' ', '', $payments_bank);
@@ -60,7 +61,7 @@ class ModelExtensionSuptoFakturiraneEu extends Model {
 		$payments_cod = $this->db->escape($payments_cod);
 		$payments_mt = $this->db->escape($payments_mt);
 
-		$this->db->query("UPDATE " . DB_PREFIX . "fakturirane_eu SET api_user = '" .$api_user . "', api_key = '" .$api_key . "', debug_mode = $debug_mode, add_to_catalog = $add_to_catalog, object_id = $object_id, station_id = $station_id, product_code_field = $product_code_field, source_id = $source_id, payment_method_id = $payment_method_id, payments_cash = '$payments_cash', payments_bank = '$payments_bank', payments_card = '$payments_card', payments_cod = '$payments_cod', payments_mt = '$payments_mt', measure_id = $measure_id");
+		$this->db->query("UPDATE " . DB_PREFIX . "fakturirane_eu SET api_user = '" .$api_user . "', api_key = '" .$api_key . "', debug_mode = $debug_mode, add_to_catalog = $add_to_catalog, object_id = $object_id, station_id = $station_id, product_code_field = $product_code_field, source_id = $source_id, payment_method_id = $payment_method_id, payments_cash = '$payments_cash', payments_bank = '$payments_bank', payments_card = '$payments_card', payments_cod = '$payments_cod', payments_mt = '$payments_mt', measure_id = $measure_id, vat_percent = $vat_percent");
 	}
 
 	public function saveSUPTOSaleID($order_id, $supto_sale_id) {
@@ -70,7 +71,6 @@ class ModelExtensionSuptoFakturiraneEu extends Model {
 	public function save_sale_status($sale_id, $number, $anul, $completed) {
 		$this->db->query("UPDATE " . DB_PREFIX . "order SET supto_unp = '$number', supto_anul = $anul, supto_completed = $completed WHERE  supto_sale_id = $sale_id");
 	}
-
 
 
 	public function getOrders($data = array()) {
@@ -111,9 +111,6 @@ class ModelExtensionSuptoFakturiraneEu extends Model {
 				$sql .= " AND (o.supto_sale_id <> 0) AND (o.supto_unp = '') AND (o.supto_anul = 0) AND (o.supto_completed = 0)";
 			}
 		}
-
-
-
 
 		if (!empty($data['filter_customer'])) {
 			$sql .= " AND CONCAT(o.firstname, ' ', o.lastname) LIKE '%" . $this->db->escape($data['filter_customer']) . "%'";
@@ -319,6 +316,11 @@ class ModelExtensionSuptoFakturiraneEu extends Model {
 		return $query->rows;
 	}
 
+	public function getOrderManufacturer($id) {
+		$query = $this->db->query("SELECT name FROM " . DB_PREFIX . "manufacturer WHERE manufacturer_id = " . (int)$id);
+		return $query->row['name'];
+	}
+
 	public function createSchema() {
 		$this->db->query("
 			CREATE TABLE IF NOT EXISTS " . DB_PREFIX . "fakturirane_eu (
@@ -336,12 +338,13 @@ class ModelExtensionSuptoFakturiraneEu extends Model {
 				payments_bank VARCHAR(60) NOT NULL,
 				payments_card VARCHAR(60) NOT NULL,
 				payments_cod VARCHAR(60) NOT NULL,
-				payments_mt VARCHAR(60) NOT NULL
+				payments_mt VARCHAR(60) NOT NULL,
+				vat_percent TINYINT NULL DEFAULT 0
 			) DEFAULT CHARSET=utf8
 ");
 
 		$this->db->query("TRUNCATE " . DB_PREFIX . "fakturirane_eu");
-		$this->db->query("INSERT INTO " . DB_PREFIX . "fakturirane_eu (api_user, api_key, object_id, station_id, debug_mode, add_to_catalog, product_code_field, source_id, payment_method_id, payments_cash, payments_bank, payments_card, payments_cod, payments_mt, measure_id) VALUES ('', '', 0, 0, 0, 1, 0, 1, 1, '', 'bank_transfer', '', 'cod', '', 70)");
+		$this->db->query("INSERT INTO " . DB_PREFIX . "fakturirane_eu (api_user, api_key, object_id, station_id, debug_mode, add_to_catalog, product_code_field, source_id, payment_method_id, payments_cash, payments_bank, payments_card, payments_cod, payments_mt, measure_id, vat_percent) VALUES ('', '', 0, 0, 0, 1, 0, 1, 1, '', 'bank_transfer', '', 'cod', '', 70, 0)");
 
 		$this->db->query("ALTER TABLE " . DB_PREFIX . "order 
 		ADD IF NOT EXISTS supto_sale_id INT NULL DEFAULT 0,
@@ -352,7 +355,6 @@ class ModelExtensionSuptoFakturiraneEu extends Model {
 		// тези няма да се дропват при деинсталиране - нарочно
 	}
 	public function deleteSchema() {
-		
 		$this->db->query("DROP TABLE IF EXISTS " . DB_PREFIX . "fakturirane_eu");
 	}
 }

@@ -8,6 +8,7 @@ $_['text_object_id'] = 'ID на търговски обект';
 $_['text_station_id'] = 'ID на работно място';
 $_['text_product_code_field'] = 'Поле за артикулен №';
 $_['text_measure'] = 'Мярка по подразбиране';
+$_['text_vat_percent'] = 'ДДС в цени';
 
 $_['text_payment_default'] = 'Основен начин на плащане';
 $_['text_payments_cash'] = 'Кодове на плащания в брой';
@@ -24,12 +25,14 @@ $_['help_station_id'] = 'Посочете кода на работното мя�
 
 
 $_['text_add_to_catalog'] = 'Автоматично добавяне на стоката в списъка със стоки в СУПТО';
+$_['text_export_xls'] = 'Експорт на  каталога в Excel файл';
 
 $_['text_extension']   = 'Extensions';
 $_['text_success']     = 'Success: You have modified Fakturirane EU module!';
 $_['text_edit']        = 'Fakturirane EU API Settings';
 
 $_['text_settings_api']   = 'API Настройки';
+$_['text_settings_supto']   = 'СУПТО настройки';
 $_['text_settings_payments']   = 'Начини на плащане';
 $_['text_settings_catalog']   = 'Каталог';
 
