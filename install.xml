@@ -20,18 +20,20 @@
 				try{
 					$FAPI = new FAPI($array['api_user'], $array['api_key']);
 
+					$sale = new StdClass();
+
 					if($order_data['customer_id'] == 0){
-						$eik = '000000000';
+						$sale->client_number = '000000000';
 					}else{
 						$r = $this->model_extension_supto_fakturirane_eu->getCustomerNumber($order_data['customer_id']);
 						if(isset($r) and isset($r['tax']) and ($r['tax'] != '')){
-							$eik = $r['tax'];
+							$sale->client_number = $r['tax'];
 						}else{
-							$eik = '000000000';
+							$sale->client_number = '000000000';
 						}
 					}
 
-					$sale = new StdClass();
+
 					$sale->order_id = $this->session->data['order_id'];
 
 					$sale->vat_percent = $array['vat_percent'];
@@ -136,7 +138,7 @@
 						}
 					}
 
-					$new_sale = $FAPI->sale_create($eik, $sale);
+					$new_sale = $FAPI->sale_create($sale);
 					if(isset($new_sale)){
 						$this->model_extension_supto_fakturirane_eu->saveSUPTOSaleID($sale->order_id, $new_sale->id);
 						if($array['debug_mode'] == 1){

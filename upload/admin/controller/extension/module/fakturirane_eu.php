@@ -180,19 +180,20 @@ class ControllerExtensionModuleFakturiraneEu extends Controller {
 						try{
 							$FAPI = new FAPI($this->API_USER, $this->API_KEY);
 
+							$sale = new StdClass();
+
 							$order_data = $this->model_extension_supto_fakturirane_eu->getOrder($order_id);
 							if($order_data['customer_id'] == 0){
-								$eik = '000000000';
+								$sale->client_number = '000000000';
 							}else{
 								$r = $this->model_extension_supto_fakturirane_eu->getCustomerNumber($order_data['customer_id']);
 								if(isset($r) and isset($r['tax']) and ($r['tax'] != '')){
-									$eik = $r['tax'];
+									$sale->client_number = $r['tax'];
 								}else{
-									$eik = '000000000';
+									$sale->client_number = '000000000';
 								}
 							}
 
-							$sale = new StdClass();
 							$sale->order_id = $order_id;
 
 							if($order_data['payment_code'] == ''){
@@ -263,7 +264,7 @@ class ControllerExtensionModuleFakturiraneEu extends Controller {
 								$sale->rows[] = $row;
 							}
 
-							$new_sale = $FAPI->sale_create($eik, $sale);
+							$new_sale = $FAPI->sale_create($sale);
 							if(isset($new_sale)){
 								$this->model_extension_supto_fakturirane_eu->saveSUPTOSaleID($sale->order_id, $new_sale->id);
 								if($this->DEBUG_MODE == 1){
