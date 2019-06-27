@@ -43,7 +43,6 @@ class ControllerExtensionModuleFakturiraneEu extends Controller {
 
 		$this->PAYMENT_CODES = $this->model_extension_supto_fakturirane_eu->getPaymentCodes();
 
-
 		return (($this->API_USER != '') and ($this->API_KEY != ''));
 	}
 
@@ -71,20 +70,14 @@ class ControllerExtensionModuleFakturiraneEu extends Controller {
 	}
 
 	public function index() {
-			//$this->response->setOutput('test');
-
 		$this->load->language('extension/module/fakturirane_eu');
 		$this->load->model("extension/supto/fakturirane_eu");
 
 		$data['op_url'] = $this->url->link('extension/module/fakturirane_eu', 'user_token=' . $this->session->data['user_token'], true);
-
-		//$data['button_export'] = $this->language->get('button_export');
 		$data['export_url'] = $this->url->link('extension/module/fakturirane_eu/export', 'user_token=' . $this->session->data['user_token'], true);
-
 
 		if ($this->request->server['REQUEST_METHOD'] == 'POST')  {
 			$this->model_extension_supto_fakturirane_eu->editSetting($this->request->post);
-
 
 			$data['api_user'] = $this->request->post['api_user'];
 			$data['api_key'] = $this->request->post['api_key'];
@@ -106,10 +99,6 @@ class ControllerExtensionModuleFakturiraneEu extends Controller {
 			$data['vat_percent'] = $this->request->post['vat_percent'];
 
 			$data['payments_codes'] = isset($this->session->data['ss_payments_codes'])?$this->session->data['ss_payments_codes']:'';
-
-			//$data['error_warning'] = $this->language->get('text_success');
-			//$this->session->data['success'] = $this->language->get('text_success');
-			//$this->response->redirect($this->url->link('marketplace/extension', 'user_token=' . $this->session->data['user_token'] . '&type=module', true));
 
 		}elseif ($this->request->server['REQUEST_METHOD'] == 'GET')  { // && $this->validate())
 			$check_api = $this->check_api();
@@ -424,12 +413,9 @@ class ControllerExtensionModuleFakturiraneEu extends Controller {
 		);
 
 		$this->response->setOutput($this->load->view('extension/module/fakturirane_eu', $data));
-	
 	}
 
-
 	public function export() {
-		
 		$this->load->model('catalog/product');
 		$returns= array();
 
@@ -443,7 +429,6 @@ class ControllerExtensionModuleFakturiraneEu extends Controller {
 
 			$product_specials = $this->model_catalog_product->getProductSpecials($result['product_id']);
 
-			
 			foreach ($product_specials  as $product_special) {
 				if (($product_special['date_start'] == '0000-00-00' || $product_special['date_start'] < date('Y-m-d')) && ($product_special['date_end'] == '0000-00-00' || $product_special['date_end'] > date('Y-m-d'))) {
 					$result['price'] = $product_special['price'];
@@ -484,8 +469,6 @@ class ControllerExtensionModuleFakturiraneEu extends Controller {
 					$product_code = $l['mpn'];
 				}
 			}
-
-		//	$product_code = $this->PRODUCT_CODE_FIELD;
 
 			$products[] = array(
 				'product_id' => $product_code,
@@ -549,7 +532,6 @@ class ControllerExtensionModuleFakturiraneEu extends Controller {
 							'notes' => ''
 						);
 					}
-
 				}
 
 			}elseif($count == 3){
@@ -580,18 +562,9 @@ class ControllerExtensionModuleFakturiraneEu extends Controller {
 								'notes' => ''
 							);
 						}
-
-
 					}
-
 				}
-
 			}
-
-				//SELECT option_id FROM oc_product_option WHERE  product_id = $product_id ORDER BY option_id
-				//SELECT option_value_id, quantity, price FROM oc_product_option_value WHERE (product_option_id = $o_id) AND (product_id = $p_id)
-
-
 		}
 
 		$products_data = array(array('Арт. номер', 'Наименование', 'Ед. цена без ДДС', 'Дост. цена без ДДС', 'Количество', 'Мярка', 'Доставчик', 'Група', 'Бележки'));
@@ -619,9 +592,7 @@ class ControllerExtensionModuleFakturiraneEu extends Controller {
 		//Setting the header type
 		header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
 		header("Content-Disposition: attachment; filename=\"" . $filename . ".xls\"");
-		
 		header('Cache-Control: max-age=0');
-
 		$objWriter->save('php://output');
 	}
 
