@@ -155,7 +155,7 @@ class ControllerExtensionModuleFakturiraneEu extends Controller {
 					try{
 						include(DIR_SYSTEM.'library/fakturirane/ClassFAPI.php');
 						$FAPI = new FAPI($this->API_USER, $this->API_KEY);
-						$date = $FAPI->license_expire();
+						$date = $FAPI->license_status();
 						$this->display_info($this->language->get('text_license_valid_to').$this->format_date($date).' г.');
 					}catch (Exception $ex) {
 						$this->display_warning($ex->getMessage());

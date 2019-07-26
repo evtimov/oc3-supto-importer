@@ -18,7 +18,7 @@
 			if(($array['api_user'] != '') and ($array['api_key'] != '')){
 				include(DIR_SYSTEM.'library/fakturirane/ClassFAPI.php');
 				try{
-					$FAPI = new FAPI($array['api_user'], $array['api_key']);
+					$FAPI = new FAPI($array['api_source'], $array['api_user'], $array['api_key']);
 
 					$sale = new StdClass();
 
@@ -32,7 +32,6 @@
 							$sale->client_number = '000000000';
 						}
 					}
-
 
 					$sale->order_id = $this->session->data['order_id'];
 

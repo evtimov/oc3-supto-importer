@@ -1,5 +1,5 @@
 <?php
-$_['heading_title'] = 'Импортер за СУПТО Фактуриране ЕУ';
+$_['heading_title'] = 'Импортер за СУПТО';
 $_['settings_title'] = 'API Настройки';
 $_['text_api_id'] = 'API номер';
 $_['text_api_key'] = 'API ключ';
@@ -28,16 +28,15 @@ $_['text_add_to_catalog'] = 'Автоматично добавяне на сто
 $_['text_export_xls'] = 'Експорт на  каталога в Excel файл';
 
 $_['text_extension']   = 'Extensions';
-$_['text_success']     = 'Success: You have modified Fakturirane EU module!';
-$_['text_edit']        = 'Fakturirane EU API Settings';
+$_['text_success']     = 'Success: You have modified module!';
+$_['text_edit']        = 'API Settings';
 
 $_['text_settings_api']   = 'API Настройки';
 $_['text_settings_supto']   = 'СУПТО настройки';
 $_['text_settings_payments']   = 'Начини на плащане';
 $_['text_settings_catalog']   = 'Каталог';
 
-$_['help_code']  = 'API номер и ключ се изпращат на вашата електронна поща от фирма Лиценз ЕООД след като поръчате и заплатите лиценз с облачна база данни с включена API функционалност.';
-
+$_['help_code']  = 'API номер и ключ се изпращат на вашата електронна поща, след като поръчате и заплатите лиценз с включена API функционалност.';
 
 $_['last_orders_title'] = 'Последни 10 поръчки';
 
@@ -80,7 +79,7 @@ $_['text_sale_anul']              = 'Анулирана';
 $_['text_sale_process']              = 'Обработва се';
 $_['text_sale_not_process']              = 'Необработена';
 
-$_['text_license_valid_to']              = 'Лицензът за Fakturirane API е валиден до: ';
+$_['text_license_valid_to']              = 'Лицензът е валиден до: ';
 $_['text_license_order']              = 'Моля, попълнете API номер и ключ! Ако не притежавате API номер и ключ, моля заявете лиценз с включена API функционалност на адрес: ';
 
 

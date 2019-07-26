@@ -5,30 +5,42 @@
  * Функции за работа с информация до базите данни на лицензите от тип "Облачна база дани",
  * предлагани от фирма "Лиценз" ЕООД чрез уеб сайта на програма "Фактуране EU" - https://fakturirane.eu/
  * @copyright  2019 Licenz Ltd.
- * @version    Release: 3.18
+ * @version    Release: 3.19
  * @link       https://fakturirane.eu/help/api/
 **/
 
 class FAPI {
-	protected $eik;
-	protected $key;
+	protected $api_source;
+	protected $api_number;
+	protected $api_key;
 
-	const API_VERSION = 3.18;
-	const API_URL = 'https://fakturirane.eu/api/';
+	const API_VERSION = 3.19;
+	const API_FAKTURIRANE_EU_URL = 'https://fakturirane.eu/api/';
+	const API_FAKTURIEL_URL = 'https://fakturiel.com/api/v1/';
 
-	public function __construct ($eik, $key){
-		$this->eik = $eik;
-		$this->key = $key;
+	const API_SOURCE_FAKTURIRANE_EU = 1;
+	const API_SOURCE_FAKTURIEL = 2;
+
+	public function __construct ($api_source, $api_number, $api_key){
+		$this->api_source = $api_source;
+		$this->api_number = $api_number;
+		$this->api_key = $api_key;
 	}
 
 	private function send_data($command, $data = null){
 		$ch = curl_init();
 		try{
-			curl_setopt($ch, CURLOPT_URL, self::API_URL.$command);
-			curl_setopt($ch, CURLOPT_HTTPHEADER, array('Authorization: Basic '. base64_encode($this->eik.':'.$this->key)));
+			if($this->api_source == self::API_SOURCE_FAKTURIRANE_EU){
+				curl_setopt($ch, CURLOPT_URL, self::API_FAKTURIRANE_EU_URL.$command);
+			}else{
+				curl_setopt($ch, CURLOPT_URL, self::API_FAKTURIEL_URL.$command);
+			}
+			curl_setopt($ch, CURLOPT_HTTPHEADER, array('Authorization: Basic '. base64_encode($this->api_number.':'.$this->api_key)));
 			curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
 			curl_setopt($ch, CURLOPT_POST, 1);
-			curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
+			if(isset($data)){
+				curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
+			}
 			$result = curl_exec($ch);
 		}catch (Exception $ex) {
 			echo 'Грешка: '.$ex->getMessage();
@@ -68,11 +80,11 @@ class FAPI {
 			case    53: $result .= 'Грешка при осъществяване на достъп или изтекъл абонамент. Моля свържете се с нас за повече подробности.'; break;
 			case    54: $result .= 'Грешен ключ за достъп.'; break;
 			case    55: $result .= 'Вече сте осъществили връзка. Моля използвайте някоя функция от FAPI.'; break;
-			case    56: $result .= 'Вашият лиценз е изтекъл. Необходимо е да го подновите от <a href="https://fakturirane.eu/license/renew/" target="_blank">https://fakturirane.eu/license/renew/</a>.'; break;
+			case    56: $result .= 'Вашият лиценз е изтекъл. Необходимо е да го подновите.'; break;
 			case    57: $result .= 'Изтекъл абонамент за API функционалност.'; break;
 
 			case 101: $result .= 'Не е изпратен обект като първи параметър на функцията.'; break;
-			case 102: $result .= 'Не е попълнено полето eik на обекта, който е подаден като параметър.'; break;
+			case 102: $result .= 'Не е попълнено полето client_number на обекта, който е подаден като параметър.'; break;
 			case 103: $result .= 'Не е попълнено полето name на обекта, който е подаден като параметър.'; break;
 			case 104: $result .= 'С този ЕИК вече съществува клиент в базата данни.'; break;
 
@@ -126,8 +138,13 @@ class FAPI {
 
 			case 1001: $result .= 'Не е открита профилна таблица в базата с данни.'; break;
 
+			case 2000: $result .= 'Функцията е забранена да се използва от СУПТО.'; break;
 			case 2001: $result .= 'Не е изпратен номер на поръчка/продажба.'; break;
 			case 2002: $result .= 'Не е открита продажба с това ID в СУПТО.'; break;
+			case 2003: $result .= 'Не е подаден параметър с детайлите на продажбата.'; break;
+			case 2004: $result .= 'Сумата на поръчката/продажбата е 0.'; break;
+			case 2005: $result .= 'Неразпознат начин на плащане.'; break;
+			case 2006: $result .= 'Не са подадени редове на поръчка/продажба.'; break;
 
 			default:
 				$result .= 'Грешка ('.$error.')!';
@@ -161,7 +178,7 @@ class FAPI {
 		$data = array('profile'=>json_encode($profile));
 		$result = $this->send_data('profile_update', $data);
 		if(isset($result)){
-			return $result->id;
+			return ($result->error = 0);
 		}else{
 			return 0;
 		}
@@ -266,8 +283,8 @@ class FAPI {
 	// ITEMS <<<
 
 	// DOCUMENTS >>>
-	public function document_create($eik, $type, $document){
-		$data = array('type'=>$type, 'eik'=>$eik, 'document'=>json_encode($document));
+	public function document_create($client_number, $type, $document){
+		$data = array('type'=>$type, 'client_number'=>$client_number, 'document'=>json_encode($document));
 		$result = $this->send_data('document_create', $data);
 		if(isset($result)){
 			return $result->document;
@@ -286,8 +303,8 @@ class FAPI {
 		}
 	}
 
-	public function document_list($type = 1, $eik = '', $limit = 5){
-		$data = array('type'=>$type, 'eik'=>$eik, 'limit'=>$limit);
+	public function document_list($type = 1, $client_number = '', $limit = 5){
+		$data = array('type'=>$type, 'client_number'=>$client_number, 'limit'=>$limit);
 		$result = $this->send_data('document_list', $data);
 		if(isset($result)){
 			if(isset($result->documents)){
@@ -364,8 +381,8 @@ class FAPI {
 		}
 	}
 
-	public function document_create_and_send($eik, $type, $document, $copy = 0, $language = 0, $email = '', $settings){
-		$data = array('type'=>$type, 'eik'=>$eik, 'document'=>json_encode($document), 'copy'=>$copy, 'language'=>$language, 'email' => $email, 'settings'=>json_encode($settings));
+	public function document_create_and_send($client_number, $type, $document, $copy = 0, $language = 0, $email = '', $settings){
+		$data = array('type'=>$type, 'client_number'=>$client_number, 'document'=>json_encode($document), 'copy'=>$copy, 'language'=>$language, 'email' => $email, 'settings'=>json_encode($settings));
 		$result = $this->send_data('document_create_and_send', $data);
 		if(isset($result)){
 			return $result->document;
@@ -404,7 +421,6 @@ class FAPI {
 			return null;
 		}
 	}
-
 	// SALES <<<
 
 	// WAREHOUSE >>>
@@ -428,6 +444,5 @@ class FAPI {
 		}
 	}
 	// WAREHOUSE <<<
-
 }
 ?>
