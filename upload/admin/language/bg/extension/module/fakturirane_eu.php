@@ -1,6 +1,7 @@
 <?php
 $_['heading_title'] = 'Импортер за СУПТО';
 $_['settings_title'] = 'API Настройки';
+$_['text_api_source'] = 'API източник';
 $_['text_api_id'] = 'API номер';
 $_['text_api_key'] = 'API ключ';
 $_['text_source_id'] = 'ID на източник';

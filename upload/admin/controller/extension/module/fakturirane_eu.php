@@ -10,6 +10,7 @@
 **/
 
 class ControllerExtensionModuleFakturiraneEu extends Controller {
+	private $API_SOURCE = 1;
 	private $API_USER = '';
 	private $API_KEY = '';
 	private $DEBUG_MODE = false;
@@ -23,6 +24,7 @@ class ControllerExtensionModuleFakturiraneEu extends Controller {
 
 	private function check_api(){
 		$array = $this->model_extension_supto_fakturirane_eu->getSettings();
+		$this->API_SOURCE = $array['api_source'];
 		$this->API_USER = $array['api_user'];
 		$this->API_KEY = $array['api_key'];
 		$this->DEBUG_MODE = ($array['debug_mode'] == 1);
@@ -79,6 +81,7 @@ class ControllerExtensionModuleFakturiraneEu extends Controller {
 		if ($this->request->server['REQUEST_METHOD'] == 'POST')  {
 			$this->model_extension_supto_fakturirane_eu->editSetting($this->request->post);
 
+			$data['api_source'] = $this->request->post['api_source'];
 			$data['api_user'] = $this->request->post['api_user'];
 			$data['api_key'] = $this->request->post['api_key'];
 			$data['debug_mode'] = (isset($this->request->post['debug_mode']) and  ($this->request->post['debug_mode'] == 1))?'checked':'';
@@ -103,6 +106,7 @@ class ControllerExtensionModuleFakturiraneEu extends Controller {
 		}elseif ($this->request->server['REQUEST_METHOD'] == 'GET')  { // && $this->validate())
 			$check_api = $this->check_api();
 
+			$data['api_source'] = $this->API_SOURCE;
 			$data['api_user'] = $this->API_USER;
 			$data['api_key'] = $this->API_KEY;
 			$data['debug_mode'] = ($this->DEBUG_MODE == 1)?'checked':'';
@@ -154,7 +158,7 @@ class ControllerExtensionModuleFakturiraneEu extends Controller {
 				if($check_api){
 					try{
 						include(DIR_SYSTEM.'library/fakturirane/ClassFAPI.php');
-						$FAPI = new FAPI($this->API_USER, $this->API_KEY);
+						$FAPI = new FAPI($this->API_SOURCE, $this->API_USER, $this->API_KEY);
 						$date = $FAPI->license_status();
 						$this->display_info($this->language->get('text_license_valid_to').$this->format_date($date).' г.');
 					}catch (Exception $ex) {
@@ -167,7 +171,7 @@ class ControllerExtensionModuleFakturiraneEu extends Controller {
 					$order_id = isset($this->request->get['order_id'])?$this->request->get['order_id']:0;
 					if($order_id > 0){
 						try{
-							$FAPI = new FAPI($this->API_USER, $this->API_KEY);
+							$FAPI = new FAPI($this->API_SOURCE, $this->API_USER, $this->API_KEY);
 
 							$sale = new StdClass();
 
@@ -273,7 +277,7 @@ class ControllerExtensionModuleFakturiraneEu extends Controller {
 					if($check_api){
 						try{
 							include(DIR_SYSTEM.'library/fakturirane/ClassFAPI.php');
-							$FAPI = new FAPI($this->API_USER, $this->API_KEY);
+							$FAPI = new FAPI($this->API_SOURCE, $this->API_USER, $this->API_KEY);
 							$status = $FAPI->sale_get_status($sale_id);
 							if(isset($status)){
 								$this->model_extension_supto_fakturirane_eu->save_sale_status($sale_id, $status->number, $status->anul, $status->completed);

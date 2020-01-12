@@ -31,6 +31,18 @@
       <div class="panel-body">
 
          <div class="form-group"><!--  required -->
+            <label class="col-sm-3  control-label" for="api_source">{{ text_api_source }}</label>
+            <div class="col-sm-9">
+
+              <select name="api_source" id="api_source" class="form-control">
+				<option value="1">СУПТО Фактуриране ЕУ API</option>
+				<option value="2">СУПТО ФАКТУРИЕЛ API</option>
+			  </select>
+
+            </div>
+		</div>
+
+         <div class="form-group"><!--  required -->
             <label class="col-sm-3  control-label" for="api_user"><span data-toggle="tooltip" data-html="true" data-trigger="hover" title="{{ help_code }}">{{ text_api_id }}</span></label>
             <div class="col-sm-9">
               <input name="api_user" type="text" id="api_user" class="form-control" value="{{ api_user }}">
@@ -43,16 +55,20 @@
             </div>
 		</div>
 		 <div class="form-group"><!--  required -->
-			 <label class="col-sm-3 control-label">
-				<input name="debug_mode" type="checkbox" id="debug_mode" value="1" {{ debug_mode }}>&nbsp;{{ text_debug_mode }}
-			</label>
-
+			<label class="col-sm-3 control-label"></label>
 			 <div class="col-sm-9">
-				<a class="btn btn-primary" href="{{op_url}}&op=1">{{ button_test_connection }}</a>
+				<input name="debug_mode" type="checkbox" id="debug_mode" value="1" {{ debug_mode }}>&nbsp;{{ text_debug_mode }}
 			</div>
-	
+	      </div>
 
-          </div>
+		 <div class="form-group"><!--  required -->
+            <label class="col-sm-3 control-label"></label>
+            <div class="col-sm-9 text-right">
+              <button type="submit" form="form-module" data-toggle="tooltip" title="{{ button_save }}" class="btn btn-primary"><i class="fa fa-save"></i> {{button_save}}</button>&nbsp;
+			  <a class="btn btn-default" href="{{op_url}}&op=1">{{ button_test_connection }}</a>
+            </div>
+		</div>
+
 
 
       </div>
@@ -368,6 +384,7 @@
 
 
 <script type="text/javascript"><!--
+document.frmSettings.api_source.value =  {{api_source}};
 document.frmSettings.vat_percent.value =  {{vat_percent}};
 document.frmSettings.measure_id.value =  {{measure_id}};
 document.frmSettings.payment_method_id.value =  {{payment_method_id}};

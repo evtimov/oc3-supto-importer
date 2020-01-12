@@ -1,11 +1,11 @@
 <?php
 class ModelExtensionSuptoFakturiraneEu extends Model {
 	public function getSettings() {
-		$query = $this->db->query("SELECT api_user, api_key, object_id, station_id, debug_mode, add_to_catalog, product_code_field, measure_id, source_id, payment_method_id, payments_cash, payments_bank, payments_card, payments_cod, payments_mt, vat_percent FROM `" . DB_PREFIX . "fakturirane_eu` LIMIT 1");
+		$query = $this->db->query("SELECT api_source, api_user, api_key, object_id, station_id, debug_mode, add_to_catalog, product_code_field, measure_id, source_id, payment_method_id, payments_cash, payments_bank, payments_card, payments_cod, payments_mt, vat_percent FROM `" . DB_PREFIX . "fakturirane_eu` LIMIT 1");
 		if ($query->row) {
 			return $query->row; // json_decode(, true);
 		}else{
-			return array('api_user'=>'', 'api_key'=>'', 'object_id'=>0, 'station_id'=>0, 'debug_mode'=>0, 'add_to_catalog'=>1, 'product_code_field'=>0, 'source_id'=>1, 'payment_method_id'=>1, 'payments_cash'=>'', 'payments_bank'=>'', 'payments_card'=>'', 'payments_cod'=>'', 'payments_mt'=>'', 'measure_id'=>70, 'vat_percent'=>0);
+			return array('api_source'=>1, 'api_user'=>'', 'api_key'=>'', 'object_id'=>0, 'station_id'=>0, 'debug_mode'=>0, 'add_to_catalog'=>1, 'product_code_field'=>0, 'source_id'=>1, 'payment_method_id'=>1, 'payments_cash'=>'', 'payments_bank'=>'', 'payments_card'=>'', 'payments_cod'=>'', 'payments_mt'=>'', 'measure_id'=>70 /* в брой */, 'vat_percent'=>0);
 		}
 	}
 
@@ -27,6 +27,7 @@ class ModelExtensionSuptoFakturiraneEu extends Model {
 
 
 	public function editSetting($post) {
+		$api_source = isset($post['api_source'])?$post['api_source']:1;
 		$api_user = isset($post['api_user'])?$post['api_user']:'';
 		$api_key = isset($post['api_key'])?$post['api_key']:'';
 		$debug_mode = isset($post['debug_mode'])?$post['debug_mode']:0;
@@ -53,6 +54,7 @@ class ModelExtensionSuptoFakturiraneEu extends Model {
 		$payments_mt = str_replace(' ', '', $payments_mt);
 
 		$api_user = $this->db->escape($api_user);
+		$api_user = $this->db->escape($api_user);
 		$api_key = $this->db->escape($api_key);
 
 		$payments_cash = $this->db->escape($payments_cash);
@@ -61,7 +63,7 @@ class ModelExtensionSuptoFakturiraneEu extends Model {
 		$payments_cod = $this->db->escape($payments_cod);
 		$payments_mt = $this->db->escape($payments_mt);
 
-		$this->db->query("UPDATE " . DB_PREFIX . "fakturirane_eu SET api_user = '" .$api_user . "', api_key = '" .$api_key . "', debug_mode = $debug_mode, add_to_catalog = $add_to_catalog, object_id = $object_id, station_id = $station_id, product_code_field = $product_code_field, source_id = $source_id, payment_method_id = $payment_method_id, payments_cash = '$payments_cash', payments_bank = '$payments_bank', payments_card = '$payments_card', payments_cod = '$payments_cod', payments_mt = '$payments_mt', measure_id = $measure_id, vat_percent = $vat_percent");
+		$this->db->query("UPDATE " . DB_PREFIX . "fakturirane_eu SET api_source = $api_source, api_user = '$api_user', api_key = '$api_key', debug_mode = $debug_mode, add_to_catalog = $add_to_catalog, object_id = $object_id, station_id = $station_id, product_code_field = $product_code_field, source_id = $source_id, payment_method_id = $payment_method_id, payments_cash = '$payments_cash', payments_bank = '$payments_bank', payments_card = '$payments_card', payments_cod = '$payments_cod', payments_mt = '$payments_mt', measure_id = $measure_id, vat_percent = $vat_percent");
 	}
 
 	public function saveSUPTOSaleID($order_id, $supto_sale_id) {
@@ -324,6 +326,7 @@ class ModelExtensionSuptoFakturiraneEu extends Model {
 	public function createSchema() {
 		$this->db->query("
 			CREATE TABLE IF NOT EXISTS " . DB_PREFIX . "fakturirane_eu (
+				api_source TINYINT NULL DEFAULT 1 ,
 				api_user VARCHAR(100) NULL DEFAULT '' ,
 				api_key VARCHAR(250) NULL DEFAULT '',
 				object_id INT NULL DEFAULT 0,
