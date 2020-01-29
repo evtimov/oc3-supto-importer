@@ -350,10 +350,10 @@ class ModelExtensionSuptoFakturiraneEu extends Model {
 		$this->db->query("INSERT INTO " . DB_PREFIX . "fakturirane_eu (api_user, api_key, object_id, station_id, debug_mode, add_to_catalog, product_code_field, source_id, payment_method_id, payments_cash, payments_bank, payments_card, payments_cod, payments_mt, measure_id, vat_percent) VALUES ('', '', 0, 0, 0, 1, 0, 1, 1, '', 'bank_transfer', '', 'cod', '', 70, 0)");
 
 		$this->db->query("ALTER TABLE " . DB_PREFIX . "order 
-		ADD IF NOT EXISTS supto_sale_id INT NULL DEFAULT 0,
-		ADD IF NOT EXISTS supto_unp VARCHAR(50) NULL DEFAULT '',
-		ADD IF NOT EXISTS supto_anul TINYINT NULL DEFAULT 0,
-		ADD IF NOT EXISTS supto_completed TINYINT NULL DEFAULT 0
+		ADD supto_sale_id INT NULL DEFAULT 0,
+		ADD supto_unp VARCHAR(50) NULL DEFAULT '',
+		ADD supto_anul TINYINT NULL DEFAULT 0,
+		ADD supto_completed TINYINT NULL DEFAULT 0
 		");
 		// тези няма да се дропват при деинсталиране - нарочно
 	}
